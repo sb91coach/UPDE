@@ -7,7 +7,11 @@ type Message = {
   content: string;
 };
 
-export default function UserPage() {
+export default function UserPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
