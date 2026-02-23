@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 
+type Message = {
+  role: "assistant" | "user";
+  content: string;
+};
+
 export default function Page() {
-  const [count, setCount] = useState(0);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   return (
     <div>
       <p>Dynamic Route Working</p>
-      <button onClick={() => setCount(count + 1)}>
-        Clicked {count}
-      </button>
     </div>
   );
 }
