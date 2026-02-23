@@ -113,7 +113,30 @@ export default function UltraPremiumInterface() {
 
         {response && (
           <div className={`response ${visible ? "visible" : ""}`}>
-            <ReactMarkdown>{response}</ReactMarkdown>
+  <ReactMarkdown
+  components={{
+    h1: ({ node, ...props }) => (
+      <h1 style={{ fontSize: "26px", marginBottom: "16px", fontWeight: 600 }} {...props} />
+    ),
+    h2: ({ node, ...props }) => (
+      <h2 style={{ fontSize: "22px", marginTop: "20px", marginBottom: "10px", fontWeight: 600 }} {...props} />
+    ),
+    h3: ({ node, ...props }) => (
+      <h3 style={{ fontSize: "18px", marginTop: "18px", marginBottom: "8px", fontWeight: 600 }} {...props} />
+    ),
+    p: ({ node, ...props }) => (
+      <p style={{ marginBottom: "12px", lineHeight: 1.6, opacity: 0.9 }} {...props} />
+    ),
+    li: ({ node, ...props }) => (
+      <li style={{ marginBottom: "6px", lineHeight: 1.5 }} {...props} />
+    ),
+    strong: ({ node, ...props }) => (
+      <strong style={{ fontWeight: 600 }} {...props} />
+    ),
+  }}
+>
+  {response}
+</ReactMarkdown>
           </div>
         )}
       </div>
