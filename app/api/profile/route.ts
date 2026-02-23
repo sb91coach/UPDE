@@ -1,45 +1,26 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import OpenAI from "openai";
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const { goal, sport, sessionId } = body;
+    const { messages } = await req.json();
 
-    if (!goal || !sessionId) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
-    const { data, error } = await supabaseServer
-      .from("performance_profiles")
-      .insert([
-        {
-          session_id: sessionId,
-          mechanical_score: 0,
-          metabolic_score: 0,
-          neurological_score: 0,
-          recovery_score: 0,
-          structural_score: 0,
-          behavioural_score: 0,
-          identity_score: 0,
-          archetype: "Pending Analysis",
-          raw_intake: { goal, sport },
-        },
-      ])
-      .select()
-      .single();
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages,
+    });
 
-    if (error) {
-      return NextResponse.json({ error }, { status: 500 });
-    }
-
-    return NextResponse.json({ id: data.id });
-  } catch (err) {
+    return NextResponse.json({
+      message: completion.choices[0].message,
+    });
+  } catch (error) {
+    console.error("OpenAI error:", error);
     return NextResponse.json(
-      { error: "Server error" },
+      { error: "Something went wrong." },
       { status: 500 }
     );
   }
