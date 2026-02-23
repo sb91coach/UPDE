@@ -1,8 +1,8 @@
-export default function Page({ params }: { params: { id: string } }) {
+export default function Home() {
   return (
-    <main style={{ padding: 24 }}>
-      <h1>Param check</h1>
-      <p><b>params.id:</b> {String(params?.id)}</p>
+    <main style={{ padding: 40, fontFamily: "sans-serif" }}>
+      <h1>UPDE</h1>
+      <p>Live and running.</p>
     </main>
   );
 }
