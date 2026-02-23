@@ -8,11 +8,15 @@ type Message = {
 };
 
 export default function Page() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages] = useState<Message[]>([
+    { role: "assistant", content: "Test message" },
+  ]);
 
   return (
     <div>
-      <p>Dynamic Route Working</p>
+      {messages.map((m, i) => (
+        <div key={i}>{m.content}</div>
+      ))}
     </div>
   );
 }
