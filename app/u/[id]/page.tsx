@@ -1,63 +1,35 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
-type Message = {
-  role: "assistant" | "user";
-  content: string;
-};
-
-const INITIAL_MESSAGE =
-  "Hello. I’m Pathfinder OS. Tell me what high performance means to you.";
+import { useState } from "react";
 
 export default function UserPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: INITIAL_MESSAGE },
-  ]);
   const [input, setInput] = useState("");
+  const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  async function sendMessage() {
+  async function handleSubmit() {
     if (!input.trim()) return;
 
-    const newMessages: Message[] = [
-      ...messages,
-      { role: "user", content: input },
-    ];
-
-    setMessages(newMessages);
-    setInput("");
     setLoading(true);
 
     try {
       const res = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "user",
+              content: input,
+            },
+          ],
+        }),
       });
 
       const data = await res.json();
-
-      setMessages([
-        ...newMessages,
-        {
-          role: "assistant",
-          content: data.message?.content || "No response.",
-        },
-      ]);
+      setResponse(data.message?.content || "No response.");
     } catch {
-      setMessages([
-        ...newMessages,
-        {
-          role: "assistant",
-          content: "Connection error.",
-        },
-      ]);
+      setResponse("Connection error.");
     }
 
     setLoading(false);
@@ -68,114 +40,105 @@ export default function UserPage() {
       style={{
         height: "100vh",
         display: "flex",
-        flexDirection: "column",
-        background: "#000",
+        justifyContent: "center",
+        alignItems: "center",
+        background:
+          "radial-gradient(circle at 30% 30%, #1e3c72, transparent 50%), radial-gradient(circle at 70% 70%, #2a5298, transparent 50%), #000",
         color: "#fff",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      {/* Ambient Glow Layer */}
       <div
         style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "60px 20px 120px",
-          maxWidth: 800,
-          margin: "0 auto",
-          width: "100%",
-        }}
-      >
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            style={{
-              marginBottom: 24,
-              display: "flex",
-              justifyContent:
-                m.role === "user" ? "flex-end" : "flex-start",
-            }}
-          >
-            <div
-              style={{
-                padding: "16px 22px",
-                borderRadius: 24,
-                maxWidth: "75%",
-                fontSize: 18,
-                lineHeight: 1.5,
-                background:
-                  m.role === "user"
-                    ? "linear-gradient(135deg, #0A84FF, #4C8DFF)"
-                    : "rgba(255,255,255,0.08)",
-                backdropFilter: "blur(20px)",
-                boxShadow:
-                  m.role === "assistant"
-                    ? "0 0 40px rgba(255,255,255,0.05)"
-                    : "0 0 30px rgba(10,132,255,0.3)",
-              }}
-            >
-              {m.content}
-            </div>
-          </div>
-        ))}
-
-        {loading && (
-          <div style={{ opacity: 0.5, fontSize: 14 }}>
-            Thinking...
-          </div>
-        )}
-
-        <div ref={bottomRef} />
-      </div>
-
-      <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          width: "100%",
-          padding: 20,
+          position: "absolute",
+          width: 600,
+          height: 600,
+          borderRadius: "50%",
           background:
-            "linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0))",
+            "radial-gradient(circle, rgba(0,150,255,0.4), transparent 60%)",
+          filter: "blur(120px)",
+          animation: "pulse 8s infinite ease-in-out",
+        }}
+      />
+
+      {/* Glass Panel */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 2,
+          width: "90%",
+          maxWidth: 700,
+          padding: 40,
+          borderRadius: 30,
+          background: "rgba(255,255,255,0.08)",
+          backdropFilter: "blur(40px)",
+          boxShadow: "0 0 80px rgba(0,150,255,0.2)",
+          textAlign: "center",
         }}
       >
-        <div
+        <h1 style={{ fontSize: 36, marginBottom: 20 }}>
+          What can I help you optimise?
+        </h1>
+
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Define your performance intent..."
           style={{
-            maxWidth: 800,
-            margin: "0 auto",
-            display: "flex",
-            gap: 12,
+            width: "100%",
+            padding: 20,
+            borderRadius: 40,
+            border: "none",
+            outline: "none",
+            fontSize: 18,
+            background: "rgba(255,255,255,0.12)",
+            color: "#fff",
+            marginBottom: 20,
+          }}
+        />
+
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          style={{
+            padding: "14px 40px",
+            borderRadius: 40,
+            border: "none",
+            fontSize: 16,
+            fontWeight: 600,
+            background: "#0A84FF",
+            color: "#fff",
+            cursor: "pointer",
           }}
         >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Speak your intent..."
+          {loading ? "Thinking..." : "Submit"}
+        </button>
+
+        {response && (
+          <div
             style={{
-              flex: 1,
-              padding: 18,
-              borderRadius: 40,
-              border: "none",
-              outline: "none",
-              fontSize: 16,
-              background: "rgba(255,255,255,0.1)",
-              color: "#fff",
-            }}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={loading}
-            style={{
-              padding: "0 26px",
-              borderRadius: 40,
-              border: "none",
-              fontSize: 16,
-              fontWeight: 600,
-              background: "#0A84FF",
-              color: "#fff",
-              cursor: "pointer",
+              marginTop: 30,
+              fontSize: 18,
+              lineHeight: 1.6,
+              opacity: 0.9,
             }}
           >
-            Send
-          </button>
-        </div>
+            {response}
+          </div>
+        )}
       </div>
+
+      <style>
+        {`
+          @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.6; }
+          }
+        `}
+      </style>
     </div>
   );
 }
