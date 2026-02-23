@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Message = {
   role: "assistant" | "user";
@@ -8,7 +8,7 @@ type Message = {
 };
 
 const INITIAL_MESSAGE =
-  "Welcome to Pathfinder OS. Tell me what high performance means to you right now.";
+  "Hello. I’m Pathfinder OS. Tell me what high performance means to you.";
 
 export default function UserPage() {
   const [messages, setMessages] = useState<Message[]>([
@@ -16,6 +16,11 @@ export default function UserPage() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   async function sendMessage() {
     if (!input.trim()) return;
@@ -48,7 +53,10 @@ export default function UserPage() {
     } catch {
       setMessages([
         ...newMessages,
-        { role: "assistant", content: "Error connecting to AI." },
+        {
+          role: "assistant",
+          content: "Connection error.",
+        },
       ]);
     }
 
@@ -58,72 +66,115 @@ export default function UserPage() {
   return (
     <div
       style={{
+        height: "100vh",
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
-        padding: 24,
+        background: "#000",
+        color: "#fff",
       }}
     >
-      <h1 style={{ fontSize: 28, marginBottom: 16 }}>Pathfinder OS</h1>
-
       <div
         style={{
           flex: 1,
           overflowY: "auto",
-          marginBottom: 16,
+          padding: "60px 20px 120px",
+          maxWidth: 800,
+          margin: "0 auto",
+          width: "100%",
         }}
       >
         {messages.map((m, i) => (
           <div
             key={i}
             style={{
-              marginBottom: 12,
-              textAlign: m.role === "user" ? "right" : "left",
+              marginBottom: 24,
+              display: "flex",
+              justifyContent:
+                m.role === "user" ? "flex-end" : "flex-start",
             }}
           >
             <div
               style={{
-                display: "inline-block",
-                padding: 12,
-                borderRadius: 12,
+                padding: "16px 22px",
+                borderRadius: 24,
+                maxWidth: "75%",
+                fontSize: 18,
+                lineHeight: 1.5,
                 background:
-                  m.role === "user" ? "#0A84FF" : "#eee",
-                color: m.role === "user" ? "white" : "black",
-                maxWidth: "80%",
+                  m.role === "user"
+                    ? "linear-gradient(135deg, #0A84FF, #4C8DFF)"
+                    : "rgba(255,255,255,0.08)",
+                backdropFilter: "blur(20px)",
+                boxShadow:
+                  m.role === "assistant"
+                    ? "0 0 40px rgba(255,255,255,0.05)"
+                    : "0 0 30px rgba(10,132,255,0.3)",
               }}
             >
               {m.content}
             </div>
           </div>
         ))}
+
+        {loading && (
+          <div style={{ opacity: 0.5, fontSize: 14 }}>
+            Thinking...
+          </div>
+        )}
+
+        <div ref={bottomRef} />
       </div>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Respond here..."
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          width: "100%",
+          padding: 20,
+          background:
+            "linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0))",
+        }}
+      >
+        <div
           style={{
-            flex: 1,
-            padding: 12,
-            borderRadius: 12,
-            border: "1px solid #ddd",
-          }}
-        />
-        <button
-          onClick={sendMessage}
-          disabled={loading}
-          style={{
-            padding: "12px 18px",
-            borderRadius: 12,
-            border: "none",
-            background: "#0A84FF",
-            color: "white",
-            fontWeight: 600,
+            maxWidth: 800,
+            margin: "0 auto",
+            display: "flex",
+            gap: 12,
           }}
         >
-          {loading ? "Thinking..." : "Send"}
-        </button>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Speak your intent..."
+            style={{
+              flex: 1,
+              padding: 18,
+              borderRadius: 40,
+              border: "none",
+              outline: "none",
+              fontSize: 16,
+              background: "rgba(255,255,255,0.1)",
+              color: "#fff",
+            }}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={loading}
+            style={{
+              padding: "0 26px",
+              borderRadius: 40,
+              border: "none",
+              fontSize: 16,
+              fontWeight: 600,
+              background: "#0A84FF",
+              color: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );
