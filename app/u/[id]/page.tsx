@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 
 export default function UserPage() {
@@ -8,12 +8,14 @@ export default function UserPage() {
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   async function handleSubmit() {
     if (!input.trim()) return;
 
     setLoading(true);
     setResponse("");
+    setVisible(false);
 
     try {
       const res = await fetch("/api/profile", {
@@ -26,8 +28,10 @@ export default function UserPage() {
 
       const data = await res.json();
       setResponse(data.message?.content || "No response.");
+      setTimeout(() => setVisible(true), 100);
     } catch {
       setResponse("Connection error.");
+      setVisible(true);
     }
 
     setLoading(false);
@@ -60,164 +64,188 @@ export default function UserPage() {
   }
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background:
-          "radial-gradient(circle at 20% 20%, #0A84FF33, transparent 40%), radial-gradient(circle at 80% 80%, #9d4edd33, transparent 40%), #000",
-        color: "#fff",
-        overflow: "hidden",
-        position: "relative",
-      }}
-    >
-      {/* Animated Background Glow */}
-      <div
-        style={{
-          position: "absolute",
-          width: 800,
-          height: 800,
-          borderRadius: "50%",
-          background:
-            "conic-gradient(from 180deg, #00f5ff, #0A84FF, #9d4edd, #ff006e, #00f5ff)",
-          filter: "blur(160px)",
-          opacity: 0.25,
-          animation: "spin 25s linear infinite",
-        }}
-      />
+    <div className="wrapper">
+      {/* Animated Gradient Background */}
+      <div className="background" />
 
-      {/* Main Panel */}
-      <div
-        style={{
-          position: "relative",
-          zIndex: 2,
-          width: "90%",
-          maxWidth: 750,
-          padding: 50,
-          borderRadius: 30,
-          background: "rgba(255,255,255,0.06)",
-          backdropFilter: "blur(40px)",
-          boxShadow: "0 0 60px rgba(0,150,255,0.25)",
-          textAlign: "center",
-        }}
-      >
-        {/* Siri Orb */}
+      {/* Glass Panel */}
+      <div className="panel">
+
+        {/* Animated Orb */}
         <div
-          style={{
-            width: 160,
-            height: 160,
-            borderRadius: "50%",
-            margin: "0 auto 40px auto",
-            background:
-              "conic-gradient(from 180deg, #00f5ff, #0A84FF, #9d4edd, #ff006e, #00f5ff)",
-            animation: listening
-              ? "spin 4s linear infinite"
-              : loading
-              ? "pulse 2s ease-in-out infinite"
-              : "none",
-            boxShadow: "0 0 60px rgba(0,150,255,0.7)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              width: 120,
-              height: 120,
-              borderRadius: "50%",
-              background: "#000",
-              filter: "blur(6px)",
-            }}
-          />
-        </div>
+          className={`orb ${listening ? "orbListening" : ""} ${
+            loading ? "orbThinking" : ""
+          }`}
+        />
 
-        <h1 style={{ fontSize: 30, marginBottom: 20 }}>
-          What can I help you optimise?
-        </h1>
+        <h1 className="title">What can I help you optimise?</h1>
 
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Define your performance intent..."
-          style={{
-            width: "100%",
-            padding: 18,
-            borderRadius: 40,
-            border: "none",
-            outline: "none",
-            fontSize: 16,
-            background: "rgba(255,255,255,0.1)",
-            color: "#fff",
-            marginBottom: 15,
-          }}
+          className="input"
         />
 
-        <div style={{ display: "flex", gap: 15, justifyContent: "center" }}>
+        <div className="buttonRow">
           <button
             onClick={handleSubmit}
             disabled={loading}
-            style={{
-              padding: "12px 30px",
-              borderRadius: 30,
-              border: "none",
-              fontSize: 14,
-              fontWeight: 600,
-              background: "#0A84FF",
-              color: "#fff",
-              cursor: "pointer",
-            }}
+            className="glassButton primary"
           >
             {loading ? "Thinking..." : "Submit"}
           </button>
 
           <button
             onClick={startListening}
-            style={{
-              padding: "12px 25px",
-              borderRadius: 30,
-              border: "1px solid rgba(255,255,255,0.2)",
-              background: "transparent",
-              color: "#fff",
-              cursor: "pointer",
-            }}
+            className="glassButton"
           >
             🎙 Speak
           </button>
         </div>
 
         {response && (
-          <div
-            style={{
-              marginTop: 40,
-              textAlign: "left",
-              lineHeight: 1.6,
-              fontSize: 16,
-              maxHeight: 300,
-              overflowY: "auto",
-            }}
-          >
+          <div className={`response ${visible ? "visible" : ""}`}>
             <ReactMarkdown>{response}</ReactMarkdown>
           </div>
         )}
       </div>
 
-      <style>
-        {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
+      <style jsx>{`
+        .wrapper {
+          height: 100vh;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          overflow: hidden;
+          background: #000;
+          position: relative;
+          color: white;
+        }
 
-          @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-          }
-        `}
-      </style>
+        .background {
+          position: absolute;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle at 20% 30%, #0A84FF40, transparent 40%),
+                      radial-gradient(circle at 70% 70%, #9d4edd40, transparent 40%),
+                      radial-gradient(circle at 40% 80%, #ff006e30, transparent 40%);
+          animation: drift 30s infinite linear;
+          filter: blur(120px);
+        }
+
+        @keyframes drift {
+          0% { transform: translate(0%, 0%) rotate(0deg); }
+          50% { transform: translate(-10%, -5%) rotate(180deg); }
+          100% { transform: translate(0%, 0%) rotate(360deg); }
+        }
+
+        .panel {
+          position: relative;
+          z-index: 2;
+          width: 90%;
+          max-width: 700px;
+          padding: 50px;
+          border-radius: 30px;
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(40px);
+          box-shadow: 0 0 60px rgba(0, 150, 255, 0.2);
+          text-align: center;
+        }
+
+        .orb {
+          width: 140px;
+          height: 140px;
+          margin: 0 auto 40px;
+          border-radius: 50%;
+          background: conic-gradient(#00f5ff, #0A84FF, #9d4edd, #ff006e, #00f5ff);
+          animation: breathe 4s ease-in-out infinite;
+          box-shadow: 0 0 80px rgba(0, 150, 255, 0.7);
+        }
+
+        .orbListening {
+          animation: spin 3s linear infinite;
+        }
+
+        .orbThinking {
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+          0%,100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+          0%,100% { transform: scale(1); }
+          50% { transform: scale(1.15); }
+        }
+
+        .title {
+          font-size: 28px;
+          margin-bottom: 20px;
+          font-weight: 500;
+        }
+
+        .input {
+          width: 100%;
+          padding: 16px;
+          border-radius: 40px;
+          border: none;
+          outline: none;
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+          margin-bottom: 20px;
+          font-size: 16px;
+        }
+
+        .buttonRow {
+          display: flex;
+          gap: 15px;
+          justify-content: center;
+        }
+
+        .glassButton {
+          padding: 12px 28px;
+          border-radius: 40px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(20px);
+          color: white;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .glassButton:hover {
+          background: rgba(255, 255, 255, 0.2);
+          transform: translateY(-2px);
+        }
+
+        .primary {
+          background: linear-gradient(135deg, #0A84FF, #9d4edd);
+          border: none;
+        }
+
+        .response {
+          margin-top: 40px;
+          opacity: 0;
+          transform: translateY(10px);
+          transition: all 0.6s ease;
+          text-align: left;
+          max-height: 300px;
+          overflow-y: auto;
+        }
+
+        .response.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      `}</style>
     </div>
   );
 }
