@@ -1,99 +1,122 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { getOrCreateSessionId } from "@/lib/session";
 
-export default function IntakePage() {
-  const router = useRouter();
+type Message = {
+  role: "assistant" | "user";
+  content: string;
+};
+
+const INITIAL_MESSAGE =
+  "Welcome to Pathfinder OS. Tell me what high performance means to you right now.";
+
+export default function UserPage() {
+  const [messages, setMessages] = useState<Message[]>([
+    { role: "assistant", content: INITIAL_MESSAGE },
+  ]);
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [goal, setGoal] = useState("General performance");
-  const [sport, setSport] = useState("General");
+  async function sendMessage() {
+    if (!input.trim()) return;
 
-  async function createProfile() {
+    const newMessages: Message[] = [
+      ...messages,
+      { role: "user", content: input },
+    ];
+
+    setMessages(newMessages);
+    setInput("");
     setLoading(true);
 
-    // Get or create anonymous session ID
-    const sessionId = getOrCreateSessionId();
+    try {
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messages: newMessages }),
+      });
 
-    const res = await fetch("/api/profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ goal, sport, sessionId }),
-    });
+      const data = await res.json();
 
-    const json = await res.json();
-    setLoading(false);
-
-    if (!res.ok) {
-      alert(json?.error ?? "Something went wrong");
-      return;
+      setMessages([
+        ...newMessages,
+        {
+          role: "assistant",
+          content: data.message?.content || "No response.",
+        },
+      ]);
+    } catch (err) {
+      setMessages([
+        ...newMessages,
+        {
+          role: "assistant",
+          content: "Error connecting to AI.",
+        },
+      ]);
     }
 
-    router.push(`/u/${json.id}`);
+    setLoading(false);
   }
 
   return (
-    <main style={{ padding: 24, maxWidth: 520, margin: "0 auto" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700 }}>
-        Pathfinder OS Intake
-      </h1>
+    <main style={{ padding: 32, maxWidth: 720, margin: "0 auto" }}>
+      <h1 style={{ fontSize: 28, marginBottom: 24 }}>Pathfinder OS</h1>
 
-      <p style={{ color: "#666" }}>
-        Create a profile (no login required). You’ll get a personal link.
-      </p>
+      <div style={{ minHeight: 400 }}>
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            style={{
+              marginBottom: 16,
+              textAlign: m.role === "user" ? "right" : "left",
+            }}
+          >
+            <div
+              style={{
+                display: "inline-block",
+                padding: 12,
+                borderRadius: 12,
+                background:
+                  m.role === "user" ? "#0A84FF" : "#eee",
+                color: m.role === "user" ? "white" : "black",
+                maxWidth: "80%",
+              }}
+            >
+              {m.content}
+            </div>
+          </div>
+        ))}
+      </div>
 
-      <div style={{ marginTop: 18 }}>
-        <label style={{ display: "block", marginBottom: 6 }}>
-          Goal
-        </label>
+      <div style={{ display: "flex", gap: 8 }}>
         <input
-          value={goal}
-          onChange={(e) => setGoal(e.target.value)}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Respond here..."
           style={{
-            width: "100%",
-            padding: 10,
-            borderRadius: 10,
+            flex: 1,
+            padding: 12,
+            borderRadius: 12,
             border: "1px solid #ddd",
           }}
         />
-      </div>
-
-      <div style={{ marginTop: 12 }}>
-        <label style={{ display: "block", marginBottom: 6 }}>
-          Sport (optional)
-        </label>
-        <input
-          value={sport}
-          onChange={(e) => setSport(e.target.value)}
+        <button
+          onClick={sendMessage}
+          disabled={loading}
           style={{
-            width: "100%",
-            padding: 10,
-            borderRadius: 10,
-            border: "1px solid #ddd",
+            padding: "12px 18px",
+            borderRadius: 12,
+            border: "none",
+            background: "#0A84FF",
+            color: "white",
+            fontWeight: 600,
           }}
-        />
+        >
+          {loading ? "Thinking..." : "Send"}
+        </button>
       </div>
-
-      <button
-        onClick={createProfile}
-        disabled={loading}
-        style={{
-          marginTop: 16,
-          width: "100%",
-          padding: 12,
-          borderRadius: 12,
-          border: "none",
-          background: "#0A84FF",
-          color: "white",
-          fontWeight: 600,
-          cursor: "pointer",
-          opacity: loading ? 0.7 : 1,
-        }}
-      >
-        {loading ? "Creating..." : "Create my profile"}
-      </button>
     </main>
   );
 }
