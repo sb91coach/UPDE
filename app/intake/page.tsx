@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { getOrCreateSessionId } from "@/lib/session";
 
 export default function IntakePage() {
   const router = useRouter();
@@ -13,10 +14,13 @@ export default function IntakePage() {
   async function createProfile() {
     setLoading(true);
 
+    // Get or create anonymous session ID
+    const sessionId = getOrCreateSessionId();
+
     const res = await fetch("/api/profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ goal, sport }),
+      body: JSON.stringify({ goal, sport, sessionId }),
     });
 
     const json = await res.json();
@@ -32,24 +36,43 @@ export default function IntakePage() {
 
   return (
     <main style={{ padding: 24, maxWidth: 520, margin: "0 auto" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700 }}>UPDE Intake</h1>
-      <p style={{ color: "#666" }}>Create a profile (no login). You’ll get a personal link.</p>
+      <h1 style={{ fontSize: 28, fontWeight: 700 }}>
+        Pathfinder OS Intake
+      </h1>
+
+      <p style={{ color: "#666" }}>
+        Create a profile (no login required). You’ll get a personal link.
+      </p>
 
       <div style={{ marginTop: 18 }}>
-        <label style={{ display: "block", marginBottom: 6 }}>Goal</label>
+        <label style={{ display: "block", marginBottom: 6 }}>
+          Goal
+        </label>
         <input
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
-          style={{ width: "100%", padding: 10, borderRadius: 10, border: "1px solid #ddd" }}
+          style={{
+            width: "100%",
+            padding: 10,
+            borderRadius: 10,
+            border: "1px solid #ddd",
+          }}
         />
       </div>
 
       <div style={{ marginTop: 12 }}>
-        <label style={{ display: "block", marginBottom: 6 }}>Sport (optional)</label>
+        <label style={{ display: "block", marginBottom: 6 }}>
+          Sport (optional)
+        </label>
         <input
           value={sport}
           onChange={(e) => setSport(e.target.value)}
-          style={{ width: "100%", padding: 10, borderRadius: 10, border: "1px solid #ddd" }}
+          style={{
+            width: "100%",
+            padding: 10,
+            borderRadius: 10,
+            border: "1px solid #ddd",
+          }}
         />
       </div>
 
