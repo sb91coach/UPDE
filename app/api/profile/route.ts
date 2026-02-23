@@ -1,33 +1,27 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 
-export async function POST() {
+export async function GET() {
   const { data, error } = await supabaseServer
-    .from("profiles")
-    .insert({
-      goal: "General performance",
-      sport: "General",
-      experience: "Beginner",
-      days_per_week: 3,
-      minutes_per_session: 45,
-      equipment: "Basic",
-      sleep_hours: 7,
-      stress_level: 3,
-      injury_notes: "",
-      archetype: "Hybrid Generalist",
-      readiness_score: 70,
-      momentum: "Stable",
-      primary_limiter: "Aerobic Base",
-      focus: [{ name: "Aerobic Base", gap: 32, note: "Build base capacity." }],
-      signals: [{ type: "info", text: "Profile created successfully." }],
-      plan: { phase: "Base", today: { title: "Day 1 — Build Capacity" } },
-    })
-    .select("id")
-    .single();
+    .from("performance_profiles")
+    .insert([
+      {
+        mechanical_score: 5,
+        metabolic_score: 6,
+        neurological_score: 4,
+        recovery_score: 7,
+        structural_score: 6,
+        behavioural_score: 8,
+        identity_score: 5,
+        archetype: "Test Archetype",
+        raw_intake: { test: true }
+      }
+    ])
+    .select();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error }, { status: 500 });
   }
 
-  return NextResponse.json({ id: data.id });
+  return NextResponse.json({ success: true, data });
 }
