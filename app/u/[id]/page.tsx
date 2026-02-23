@@ -3,12 +3,25 @@
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 
-export default function UserPage() {
+export default function UltraPremiumInterface() {
   const [input, setInput] = useState("");
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+
+  // Mouse parallax tracking
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      setMouse({
+        x: (e.clientX / window.innerWidth - 0.5) * 20,
+        y: (e.clientY / window.innerHeight - 0.5) * 20,
+      });
+    };
+    window.addEventListener("mousemove", handleMove);
+    return () => window.removeEventListener("mousemove", handleMove);
+  }, []);
 
   async function handleSubmit() {
     if (!input.trim()) return;
@@ -28,7 +41,7 @@ export default function UserPage() {
 
       const data = await res.json();
       setResponse(data.message?.content || "No response.");
-      setTimeout(() => setVisible(true), 100);
+      setTimeout(() => setVisible(true), 200);
     } catch {
       setResponse("Connection error.");
       setVisible(true);
@@ -65,16 +78,17 @@ export default function UserPage() {
 
   return (
     <div className="wrapper">
-      {/* Animated Gradient Background */}
       <div className="background" />
 
-      {/* Glass Panel */}
-      <div className="panel">
-
-        {/* Animated Orb */}
+      <div
+        className="panel"
+        style={{
+          transform: `rotateX(${mouse.y}deg) rotateY(${mouse.x}deg)`
+        }}
+      >
         <div
-          className={`orb ${listening ? "orbListening" : ""} ${
-            loading ? "orbThinking" : ""
+          className={`orb ${listening ? "listening" : ""} ${
+            loading ? "thinking" : ""
           }`}
         />
 
@@ -87,19 +101,12 @@ export default function UserPage() {
           className="input"
         />
 
-        <div className="buttonRow">
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="glassButton primary"
-          >
+        <div className="buttons">
+          <button onClick={handleSubmit} className="glass primary">
             {loading ? "Thinking..." : "Submit"}
           </button>
 
-          <button
-            onClick={startListening}
-            className="glassButton"
-          >
+          <button onClick={startListening} className="glass">
             🎙 Speak
           </button>
         </div>
@@ -117,8 +124,9 @@ export default function UserPage() {
           display: flex;
           justify-content: center;
           align-items: center;
+          background: black;
           overflow: hidden;
-          background: #000;
+          perspective: 1000px;
           position: relative;
           color: white;
         }
@@ -127,53 +135,62 @@ export default function UserPage() {
           position: absolute;
           width: 200%;
           height: 200%;
-          background: radial-gradient(circle at 20% 30%, #0A84FF40, transparent 40%),
-                      radial-gradient(circle at 70% 70%, #9d4edd40, transparent 40%),
-                      radial-gradient(circle at 40% 80%, #ff006e30, transparent 40%);
-          animation: drift 30s infinite linear;
-          filter: blur(120px);
+          background: conic-gradient(
+            from 0deg,
+            #0A84FF,
+            #9d4edd,
+            #ff006e,
+            #00f5ff,
+            #0A84FF
+          );
+          animation: rotateBg 40s linear infinite;
+          filter: blur(200px);
+          opacity: 0.2;
         }
 
-        @keyframes drift {
-          0% { transform: translate(0%, 0%) rotate(0deg); }
-          50% { transform: translate(-10%, -5%) rotate(180deg); }
-          100% { transform: translate(0%, 0%) rotate(360deg); }
+        @keyframes rotateBg {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
 
         .panel {
           position: relative;
           z-index: 2;
           width: 90%;
-          max-width: 700px;
-          padding: 50px;
-          border-radius: 30px;
+          max-width: 750px;
+          padding: 60px;
+          border-radius: 40px;
           background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(40px);
-          box-shadow: 0 0 60px rgba(0, 150, 255, 0.2);
+          backdrop-filter: blur(60px);
+          box-shadow:
+            0 0 80px rgba(0,150,255,0.3),
+            inset 0 0 40px rgba(255,255,255,0.05);
+          transition: transform 0.1s ease;
           text-align: center;
         }
 
         .orb {
-          width: 140px;
-          height: 140px;
-          margin: 0 auto 40px;
+          width: 160px;
+          height: 160px;
+          margin: 0 auto 50px;
           border-radius: 50%;
-          background: conic-gradient(#00f5ff, #0A84FF, #9d4edd, #ff006e, #00f5ff);
+          background: radial-gradient(circle at 30% 30%, #ffffff, transparent 40%),
+                      conic-gradient(#00f5ff, #0A84FF, #9d4edd, #ff006e, #00f5ff);
           animation: breathe 4s ease-in-out infinite;
-          box-shadow: 0 0 80px rgba(0, 150, 255, 0.7);
+          box-shadow: 0 0 100px rgba(0,150,255,0.8);
         }
 
-        .orbListening {
+        .listening {
           animation: spin 3s linear infinite;
         }
 
-        .orbThinking {
+        .thinking {
           animation: pulse 1.5s ease-in-out infinite;
         }
 
         @keyframes breathe {
           0%,100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
+          50% { transform: scale(1.12); }
         }
 
         @keyframes spin {
@@ -183,47 +200,48 @@ export default function UserPage() {
 
         @keyframes pulse {
           0%,100% { transform: scale(1); }
-          50% { transform: scale(1.15); }
+          50% { transform: scale(1.2); }
         }
 
         .title {
-          font-size: 28px;
-          margin-bottom: 20px;
+          font-size: 30px;
+          margin-bottom: 25px;
           font-weight: 500;
+          letter-spacing: 0.5px;
         }
 
         .input {
           width: 100%;
-          padding: 16px;
-          border-radius: 40px;
+          padding: 18px;
+          border-radius: 50px;
           border: none;
           outline: none;
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.08);
           color: white;
-          margin-bottom: 20px;
           font-size: 16px;
+          margin-bottom: 25px;
         }
 
-        .buttonRow {
+        .buttons {
           display: flex;
-          gap: 15px;
+          gap: 20px;
           justify-content: center;
         }
 
-        .glassButton {
-          padding: 12px 28px;
-          border-radius: 40px;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          background: rgba(255, 255, 255, 0.08);
+        .glass {
+          padding: 14px 30px;
+          border-radius: 50px;
+          border: 1px solid rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.1);
           backdrop-filter: blur(20px);
           color: white;
           cursor: pointer;
           transition: all 0.3s ease;
         }
 
-        .glassButton:hover {
-          background: rgba(255, 255, 255, 0.2);
-          transform: translateY(-2px);
+        .glass:hover {
+          background: rgba(255,255,255,0.2);
+          transform: translateY(-3px);
         }
 
         .primary {
@@ -232,9 +250,9 @@ export default function UserPage() {
         }
 
         .response {
-          margin-top: 40px;
+          margin-top: 50px;
           opacity: 0;
-          transform: translateY(10px);
+          transform: translateY(20px);
           transition: all 0.6s ease;
           text-align: left;
           max-height: 300px;
