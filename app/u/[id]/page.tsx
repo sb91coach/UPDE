@@ -2,21 +2,18 @@
 
 import { useState } from "react";
 
-type Message = {
-  role: "assistant" | "user";
-  content: string;
-};
-
 export default function Page() {
-  const [messages] = useState<Message[]>([
-    { role: "assistant", content: "Test message" },
-  ]);
+  const [count, setCount] = useState(0);
 
   return (
-    <div>
-      {messages.map((m, i) => (
-        <div key={i}>{m.content}</div>
-      ))}
+    <div style={{ padding: 20 }}>
+      <p>Count: {count}</p>
+      <button
+        style={{ padding: 10, background: "black", color: "white" }}
+        onClick={() => setCount(count + 1)}
+      >
+        Increment
+      </button>
     </div>
   );
 }
