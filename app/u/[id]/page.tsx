@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type Message = {
   role: "assistant" | "user";
@@ -14,13 +14,11 @@ const FOLLOW_UP_MESSAGE =
   "Understood. What constraints in your current lifestyle are limiting that performance?";
 
 export default function Page() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    { role: "assistant", content: INITIAL_MESSAGE },
+  ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setMessages([{ role: "assistant", content: INITIAL_MESSAGE }]);
-  }, []);
 
   function sendMessage() {
     if (!input.trim()) return;
