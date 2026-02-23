@@ -17,10 +17,14 @@ export async function POST(req: Request) {
     return NextResponse.json({
       message: completion.choices[0].message,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("OpenAI error:", error);
+
     return NextResponse.json(
-      { error: "Something went wrong." },
+      {
+        error: error?.message || "Unknown error",
+        details: error,
+      },
       { status: 500 }
     );
   }
