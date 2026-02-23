@@ -25,16 +25,24 @@ export default function Page() {
   function sendMessage() {
     if (!input.trim()) return;
 
-    const newMessages = [...messages, { role: "user", content: input }];
+    const userMessage: Message = {
+      role: "user",
+      content: input,
+    };
+
+    const newMessages: Message[] = [...messages, userMessage];
+
     setMessages(newMessages);
     setInput("");
     setLoading(true);
 
     setTimeout(() => {
-      setMessages([
-        ...newMessages,
-        { role: "assistant", content: FOLLOW_UP_MESSAGE },
-      ]);
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: FOLLOW_UP_MESSAGE,
+      };
+
+      setMessages([...newMessages, assistantMessage]);
       setLoading(false);
     }, 600);
   }
