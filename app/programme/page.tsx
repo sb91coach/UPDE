@@ -68,40 +68,41 @@ export default function ProgrammePage() {
   }, []);
 
   if (!profile) return null;
+  const p = profile;
 
   /* ======================================================
      DERIVED METRICS
   ======================================================= */
 
-  const week = profile.current_week || 1;
-  const phase = PHASES[week - 1];
+  const week = p.current_week || 1;
+  const phase = PHASES[week - 1] || "Accumulation";
 
   const strengthIndex =
-    (profile.strength_upper + profile.strength_lower) / 2 || 60;
+    ((p.strength_upper || 60) + (p.strength_lower || 60)) / 2;
 
-  const aerobicIndex = profile.aerobic_score || 60;
+  const aerobicIndex = p.aerobic_score || 60;
 
   const recoveryIndex =
-    profile.sleep_score * 0.6 +
-    (100 - profile.stress_level) * 0.4;
+    (p.sleep_score || 60) * 0.6 +
+    (100 - (p.stress_level || 40)) * 0.4;
 
   const readinessBias =
-    profile.readiness_score > 75 ? 1.05 :
-    profile.readiness_score > 65 ? 1 :
+    p.readiness_score > 75 ? 1.05 :
+    p.readiness_score > 65 ? 1 :
     0.9;
 
   const fatigueBias =
-    profile.fatigue_score > 60 ? 0.85 : 1;
+    p.fatigue_score > 60 ? 0.85 : 1;
 
   const isDeload =
-    profile.deload_active ||
-    profile.readiness_score < 55 ||
-    profile.fatigue_score > 75;
+    p.deload_active ||
+    p.readiness_score < 55 ||
+    p.fatigue_score > 75;
 
   const intensityScale =
     readinessBias * fatigueBias * (isDeload ? 0.85 : 1);
 
-  const experience = profile.experience?.toLowerCase() || "beginner";
+  const experience = p.experience?.toLowerCase() || "beginner";
 
   const setsMain =
     experience.includes("advanced") ? 5 :
@@ -114,7 +115,7 @@ export default function ProgrammePage() {
     "6–7";
 
   function prescribe(base: number) {
-    if (!profile.strength_upper || !profile.strength_lower)
+    if (!p.strength_upper || !p.strength_lower)
       return `RPE ${rpeTarget}`;
 
     const scaled = base * intensityScale;
@@ -151,7 +152,7 @@ export default function ProgrammePage() {
 
   function buildSession(dayIndex: number) {
     const recoveryDay =
-      dayIndex === Math.floor(profile.days_per_week / 2);
+      dayIndex === Math.floor(p.days_per_week / 2);
 
     if (recoveryDay) {
       return {
@@ -219,48 +220,40 @@ export default function ProgrammePage() {
   }
 
   const sessions = Array.from(
-    { length: profile.days_per_week || 3 },
+    { length: p.days_per_week || 3 },
     (_, i) => buildSession(i)
   );
 
   async function completeSession(name: string) {
     await supabase.from("session_logs").insert({
-      profile_id: profile.id,
+      profile_id: p.id,
       week,
       session_name: name,
-      perceived_exertion: profile.readiness_score,
+      perceived_exertion: p.readiness_score,
       completed: true,
     });
 
     await supabase
       .from("profiles")
       .update({
-        fatigue_score: profile.fatigue_score + 5,
+        fatigue_score: p.fatigue_score + 5,
       })
-      .eq("id", profile.id);
+      .eq("id", p.id);
 
     window.location.reload();
   }
 
   return (
     <div className="outer">
-
-      {/* ===== OS NAVIGATION ===== */}
-
       <div className="topNav">
-        <div className="logo">
-          Performance Pathfinder
-        </div>
-
+        <div className="logo">Performance Pathfinder</div>
         <div className="tabs">
           <button onClick={() => router.push("/profile")}>
             Dashboard
           </button>
-
           <button className="active">
             Programme
           </button>
-
           <button onClick={() => router.push("/checkin")}>
             Check-In
           </button>
@@ -268,7 +261,6 @@ export default function ProgrammePage() {
       </div>
 
       <div className="container">
-
         <div className="header">
           <div className="phase">
             WEEK {week} · {phase}
@@ -282,7 +274,7 @@ export default function ProgrammePage() {
             Strength {Math.round(strengthIndex)} ·
             Aerobic {Math.round(aerobicIndex)} ·
             Recovery {Math.round(recoveryIndex)} ·
-            Fatigue {profile.fatigue_score}
+            Fatigue {p.fatigue_score}
           </div>
         </div>
 
@@ -333,7 +325,6 @@ export default function ProgrammePage() {
             </div>
           ))}
         </div>
-
       </div>
 
       <style jsx>{`
