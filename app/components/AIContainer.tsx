@@ -33,7 +33,7 @@ export default function AIContainer({ children }: { children: ReactNode }) {
             background: "rgba(26,31,46,0.88)",
             backdropFilter: "blur(40px)",
             borderRadius: 28,
-            padding: 56,
+            padding: "clamp(24px, 5vw, 56px)",
             boxShadow: "0 40px 120px rgba(0,0,0,0.5)",
             border: "1px solid rgba(255,255,255,0.06)",
             color: "#fff",

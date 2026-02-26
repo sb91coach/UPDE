@@ -120,42 +120,57 @@ export default function Home() {
           display:flex;
           justify-content:space-between;
           align-items:center;
-          padding:20px 40px;
+          padding:16px 20px;
           border-bottom:1px solid rgba(255,255,255,0.08);
+        }
+        @media (min-width: 769px) {
+          .topNav { padding:20px 40px; }
         }
 
         .logo {
           font-weight:600;
           letter-spacing:1px;
           opacity:0.85;
+          font-size:clamp(14px, 4vw, 16px);
         }
 
         .tabs button {
-          margin-left:18px;
+          margin-left:12px;
+          padding:10px 16px;
+          min-height:44px;
           background:none;
           border:none;
           color:white;
           cursor:pointer;
           opacity:0.6;
           font-size:14px;
+          -webkit-tap-highlight-color:transparent;
         }
-
+        @media (min-width: 769px) {
+          .tabs button { margin-left:18px; padding:0; min-height:auto; }
+        }
         .tabs button:hover {
           opacity:1;
         }
 
         .container {
           max-width:1400px;
-          margin:100px auto;
-          padding:0 40px;
+          margin:40px auto;
+          padding:0 20px;
+        }
+        @media (min-width: 769px) {
+          .container { margin:100px auto; padding:0 40px; }
         }
 
         .heroCard {
           background:rgba(255,255,255,0.05);
           border-radius:24px;
-          padding:60px;
+          padding:32px 24px;
           backdrop-filter:blur(8px);
-          margin-bottom:60px;
+          margin-bottom:40px;
+        }
+        @media (min-width: 769px) {
+          .heroCard { padding:60px; margin-bottom:60px; }
         }
 
         .phase {
@@ -166,7 +181,7 @@ export default function Home() {
         }
 
         .headline {
-          font-size:42px;
+          font-size:clamp(28px, 6vw, 42px);
           line-height:1.2;
           margin-bottom:24px;
         }
@@ -180,32 +195,39 @@ export default function Home() {
 
         .ctaRow {
           display:flex;
-          gap:20px;
+          flex-wrap:wrap;
+          gap:12px;
         }
-
+        .primaryBtn, .secondaryBtn {
+          min-height:48px;
+          padding:14px 24px;
+          border-radius:10px;
+          font-size:16px;
+          cursor:pointer;
+          -webkit-tap-highlight-color:transparent;
+        }
         .primaryBtn {
-          padding:14px 28px;
           background:#2F80ED;
           border:none;
-          border-radius:10px;
           color:white;
           font-weight:600;
-          cursor:pointer;
         }
-
         .secondaryBtn {
-          padding:14px 28px;
           background:rgba(255,255,255,0.08);
           border:none;
-          border-radius:10px;
           color:white;
-          cursor:pointer;
         }
 
         .intelGrid {
           display:grid;
-          grid-template-columns:repeat(3,1fr);
-          gap:30px;
+          grid-template-columns:1fr;
+          gap:20px;
+        }
+        @media (min-width: 769px) {
+          .intelGrid {
+            grid-template-columns:repeat(3,1fr);
+            gap:30px;
+          }
         }
 
         .intelCard {
