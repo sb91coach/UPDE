@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { RequireAuth } from "@/lib/requireAuth";
 import type { PerformanceBenchmarks, ExerciseBenchmark } from "@/lib/profile/benchmarkSchema";
 import { BENCHMARK_SECTIONS } from "@/lib/profile/benchmarkSchema";
 import { OPTIONS_BY_SECTION, type BenchmarkOption } from "@/lib/profile/benchmarkExerciseOptions";
@@ -119,13 +120,15 @@ export default function BenchmarksPage() {
   if (!profile) return null;
 
   return (
+    <RequireAuth>
     <div className="outer">
       <nav className="topNav">
         <div className="logo">Performance Pathfinder</div>
         <div className="tabs">
           <Link href="/profile" className="tab">Dashboard</Link>
           <Link href="/programme" className="tab">Programme</Link>
-          <Link href="/checkin" className="tab">Check-In</Link>
+          <Link href="/tactical" className="tab">Tactical</Link>
+          <Link href="/nutrition" className="tab">Nutrition</Link>
           <span className="tab active">Benchmarks</span>
         </div>
       </nav>
@@ -170,6 +173,7 @@ export default function BenchmarksPage() {
                     </label>
                   ))}
                   <div className="addExerciseWrap">
+                    <span className="addExerciseWrapLabel">Add another exercise</span>
                     <input
                       type="text"
                       className="addExerciseInput"
@@ -179,18 +183,24 @@ export default function BenchmarksPage() {
                       onFocus={() => { setAddFocused((o) => ({ ...o, [section.id]: true })); setAddOpen((o) => ({ ...o, [section.id]: true })); }}
                       onBlur={() => setTimeout(() => { setAddFocused((o) => ({ ...o, [section.id]: false })); setAddOpen((o) => ({ ...o, [section.id]: false })); }, 150)}
                     />
-                    {(addOpen[section.id] || addFocused[section.id]) && getAddableOptions(section.id).length > 0 && (
+                    {(addOpen[section.id] || addFocused[section.id]) && (
                       <ul className="addExerciseList" role="listbox">
-                        {getAddableOptions(section.id).map((opt) => (
-                          <li
-                            key={opt.key}
-                            role="option"
-                            className="addExerciseItem"
-                            onMouseDown={(e) => { e.preventDefault(); addExercise(section.id, opt.key); }}
-                          >
-                            {opt.label}
+                        {getAddableOptions(section.id).length > 0 ? (
+                          getAddableOptions(section.id).map((opt) => (
+                            <li
+                              key={opt.key}
+                              role="option"
+                              className="addExerciseItem"
+                              onMouseDown={(e) => { e.preventDefault(); addExercise(section.id, opt.key); }}
+                            >
+                              {opt.label}
+                            </li>
+                          ))
+                        ) : (
+                          <li className="addExerciseListEmpty" role="option" aria-disabled>
+                            {addQuery[section.id]?.trim() ? "No matching exercises" : "Type to search…"}
                           </li>
-                        ))}
+                        )}
                       </ul>
                     )}
                   </div>
@@ -266,7 +276,12 @@ export default function BenchmarksPage() {
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 16px;
           margin-bottom: 16px;
-          overflow: hidden;
+          overflow: visible;
+          position: relative;
+          z-index: 0;
+        }
+        .benchSection:focus-within {
+          z-index: 1;
         }
         .benchSectionHead {
           width: 100%;
@@ -323,21 +338,31 @@ export default function BenchmarksPage() {
         }
         .addExerciseWrap {
           position: relative;
-          margin-top: 8px;
+          margin-top: 12px;
+          z-index: 2;
+        }
+        .addExerciseWrapLabel {
+          display: block;
+          font-size: 12px;
+          opacity: 0.65;
+          margin-bottom: 6px;
+          letter-spacing: 0.02em;
         }
         .addExerciseInput {
           width: 100%;
-          padding: 10px 14px;
+          padding: 12px 16px;
           background: rgba(255,255,255,0.06);
-          border: 1px dashed rgba(255,255,255,0.2);
+          border: 1px dashed rgba(255,255,255,0.25);
           border-radius: 10px;
           color: white;
           font-size: 14px;
+          box-sizing: border-box;
         }
         .addExerciseInput::placeholder { opacity: 0.5; }
         .addExerciseInput:focus {
           outline: none;
           border-color: rgba(47,128,237,0.5);
+          border-style: solid;
           background: rgba(255,255,255,0.08);
         }
         .addExerciseList {
@@ -345,25 +370,30 @@ export default function BenchmarksPage() {
           top: 100%;
           left: 0;
           right: 0;
-          margin: 4px 0 0;
-          padding: 8px 0;
+          margin: 6px 0 0;
+          padding: 6px 0;
           max-height: 280px;
           overflow-y: auto;
           background: rgba(10,18,32,0.98);
-          border: 1px solid rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.18);
           border-radius: 12px;
           list-style: none;
-          z-index: 10;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+          z-index: 100;
+          box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
         }
         .addExerciseItem {
-          padding: 10px 16px;
+          padding: 12px 16px;
           font-size: 14px;
           cursor: pointer;
-          opacity: 0.9;
+          opacity: 0.95;
         }
         .addExerciseItem:hover {
           background: rgba(47,128,237,0.2);
+        }
+        .addExerciseListEmpty {
+          padding: 12px 16px;
+          font-size: 13px;
+          opacity: 0.6;
         }
         .saveBtn {
           margin-top: 24px;
@@ -380,5 +410,6 @@ export default function BenchmarksPage() {
         .saveBtn:disabled { opacity: 0.7; cursor: not-allowed; }
       `}</style>
     </div>
+    </RequireAuth>
   );
 }

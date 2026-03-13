@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 
 const orbStyle: React.CSSProperties = {
   position: "fixed",
@@ -155,9 +156,9 @@ export default function OSLayer({
           PERFORMANCE PATHFINDER OS
         </div>
         <div className="osLayerBarNav">
-          <button style={navBtn}>Dashboard</button>
+          <Link href="/profile" style={navBtn}>Dashboard</Link>
           <button style={navBtn} onClick={toggle}>AI</button>
-          <button style={navBtn}>Settings</button>
+          <Link href="/settings" style={navBtn}>Settings</Link>
         </div>
       </div>
 

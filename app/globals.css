@@ -3,6 +3,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Mobile-first spacing scale */
+  --space-inner: 12px;
+  --space-block: 24px;
+  --space-page: 16px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -16,6 +20,7 @@ html,
 body {
   height: 100%;
   margin: 0;
+  overflow-x: hidden;
 }
 
 body {

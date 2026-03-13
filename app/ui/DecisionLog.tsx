@@ -12,6 +12,7 @@ export type DecisionLogEntry = {
   adjustmentMade: string;
   explanation: string;
   triggerVariables?: Record<string, unknown>;
+  thresholdBreached?: string;
 };
 
 export type DecisionLogProps = {
@@ -36,6 +37,18 @@ export default function DecisionLog({
           {show.map((e) => (
             <li key={e.id} className="decisionLogItem">
               <div className="decisionLogAdjustment">{e.adjustmentMade}</div>
+              {e.triggerVariables && Object.keys(e.triggerVariables).length > 0 && (
+                <ul className="decisionLogTriggers">
+                  {Object.entries(e.triggerVariables).map(([k, v]) => (
+                    <li key={k}>
+                      {String(k).replace(/_/g, " ")}: {typeof v === "object" ? JSON.stringify(v) : String(v)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {e.thresholdBreached && (
+                <div className="decisionLogThreshold">Threshold: {e.thresholdBreached}</div>
+              )}
               <div className="decisionLogExplanation">{e.explanation}</div>
               <div className="decisionLogMeta">{e.createdAt}</div>
             </li>
@@ -67,6 +80,10 @@ export default function DecisionLog({
         }
         .decisionLogItem:last-child { border-bottom: none; }
         .decisionLogAdjustment { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+        .decisionLogTriggers { list-style: none; margin: 4px 0 6px; padding: 0; font-size: 12px; opacity: 0.8; }
+        .decisionLogTriggers li { margin-bottom: 2px; }
+        .decisionLogTriggers li::before { content: "• "; color: rgba(47, 128, 237, 0.8); }
+        .decisionLogThreshold { font-size: 11px; opacity: 0.65; margin-bottom: 2px; }
         .decisionLogExplanation { font-size: 12px; opacity: 0.8; line-height: 1.4; }
         .decisionLogMeta { font-size: 11px; opacity: 0.5; margin-top: 4px; }
       `}</style>

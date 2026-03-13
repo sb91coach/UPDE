@@ -40,6 +40,8 @@ export type PerformanceBenchmarks = {
   exerciseBenchmarks?: Record<string, ExerciseBenchmark>;
   aerobicBenchmarks?: Partial<AerobicBenchmarks>;
   powerBenchmarks?: Partial<PowerBenchmarks>;
+  /** Top-level timestamp for "last updated" (optional; exercises can have lastUpdated too). */
+  last_updated?: string | null; // ISO date
 };
 
 export const EXERCISE_BENCHMARK_KEYS: ExerciseBenchmarkKey[] = [

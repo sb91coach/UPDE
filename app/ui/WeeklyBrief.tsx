@@ -48,10 +48,16 @@ export default function WeeklyBrief({
       <p className="weeklyBriefWhy">{whyThisWeek}</p>
       <style jsx>{`
         .weeklyBrief {
-          background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+          background: linear-gradient(135deg, rgba(17,24,39,0.95), rgba(30,41,59,0.9));
           border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 16px;
-          padding: 20px 24px;
+          border-radius: 24px;
+          padding: 24px 24px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 60px rgba(47,128,237,0.15);
+          transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        .weeklyBrief:hover {
+          box-shadow: 0 0 28px rgba(47,128,237,0.25), 0 0 56px rgba(39,224,166,0.12), 0 20px 60px rgba(0,0,0,0.6);
+          border-color: rgba(47,128,237,0.2);
         }
         .weeklyBriefWeek {
           font-size: 11px;

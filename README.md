@@ -1,5 +1,31 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Setup
+
+### Environment variables
+
+Copy `.env.example` to `.env.local` and fill in your values:
+
+```bash
+cp .env.example .env.local
+```
+
+- **Supabase** (required): Create a project at [supabase.com](https://supabase.com), then set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- **Stripe** (for Settings → Subscription / payments): Set `STRIPE_SECRET_KEY` (test key is fine). Optionally set `STRIPE_CUSTOMER_PORTAL_RETURN_URL` (default is request origin + `/settings`).
+
+### Database migration (user preferences)
+
+The Settings page stores preferences in `profiles.user_preferences`. Run the migration once:
+
+1. Open your Supabase project → **SQL Editor** → **New query**.
+2. Run the SQL from the migration file, or run:
+   ```bash
+   node scripts/run-user-preferences-migration.js
+   ```
+   and paste the printed SQL into the editor, then run it.
+
+The migration adds a `user_preferences` jsonb column to `profiles` (default `'{}'`).
+
 ## Getting Started
 
 First, run the development server:

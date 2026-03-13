@@ -1,14 +1,64 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useRef } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { RequireAuth } from "@/lib/requireAuth";
 import type { ProgrammeType } from "@/lib/trainingTargets";
 import { getExerciseVideos } from "@/lib/exerciseVideos";
 import { getBenchmarks } from "@/engine/benchmarkEngine";
 import { prescribe } from "@/engine/prescriptionEngine";
+import { getRiskSignals } from "@/engine/riskIndex";
+import { generateWeeklyBrief } from "@/engine/weeklyBriefGenerator";
 import { EXERCISE_DISPLAY_NAMES } from "@/lib/profile/benchmarkSchema";
 import ProgrammeCard from "@/app/ui/ProgrammeCard";
+import WeeklyBrief from "@/app/ui/WeeklyBrief";
+import DailyAdvisories from "@/app/ui/DailyAdvisories";
+import { getAdvisories } from "@/engine/advisoriesEngine";
+import type { InjuryEntry } from "@/engine/injuryMemoryEngine";
+import { getAdaptiveGuardrails, applyIntensityCap } from "@/engine/adaptiveGuardrails";
+import type { BehaviourDriftOutput } from "@/engine/behaviourDriftModel";
+import { PerformanceEngine } from "@/lib/performanceEngine";
+import { subscribe as subscribePerformance } from "@/lib/performanceEvents";
+import type { ProgrammeData, ProgrammeInjuryAdjustment } from "@/lib/performanceEngine";
+import OSLayer from "@/app/components/OSLayer";
+import WeekSelector from "@/app/components/programme/WeekSelector";
+import ProgrammeWeekView from "@/app/components/programme/ProgrammeWeekView";
+import type { ProgrammeWeekData } from "@/app/components/programme/ProgrammeWeekView";
+import type { ProgrammeDayData } from "@/app/components/programme/DayAccordion";
+import type { SessionBlockData } from "@/app/components/programme/SessionBlock";
+import programme from "@/data/programmes";
+import type { ProgrammeDay as ProgrammeDayFromData, ProgrammeSessionBlock } from "@/data/programmes";
+
+function NavTab({
+  href,
+  label,
+  pathname,
+}: {
+  href: string;
+  label: string;
+  pathname: string;
+}) {
+  const active = pathname === href;
+  return (
+    <Link
+      href={href}
+      className={active ? "active" : undefined}
+      style={{
+        fontSize: 14,
+        opacity: active ? 1 : 0.6,
+        borderBottom: active ? "2px solid #2F80ED" : "2px solid transparent",
+        paddingBottom: 4,
+        cursor: "pointer",
+        textDecoration: "none",
+        color: "inherit",
+      }}
+    >
+      {label}
+    </Link>
+  );
+}
 
 /* ======================================================
    PROFILE TYPE (linked from intake)
@@ -81,7 +131,7 @@ const PERFORMANCE_MARKERS = [
 
 export default function ProgrammePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [expanded, setExpanded] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState<number | null>(0);
   const [videoModal, setVideoModal] = useState<{
     videoId: string;
     label: string;
@@ -98,6 +148,19 @@ export default function ProgrammePage() {
     energy: "medium" as "low" | "medium" | "high",
     sleep: "good" as "poor" | "okay" | "good",
   });
+  const [debriefOpen, setDebriefOpen] = useState(false);
+  const [debriefSessionName, setDebriefSessionName] = useState<string | null>(null);
+  const [debriefForm, setDebriefForm] = useState({ howFelt: 3, niggles: "", readyNext: 3 });
+  const [debriefSubmitting, setDebriefSubmitting] = useState(false);
+  const [injuries, setInjuries] = useState<InjuryEntry[]>([]);
+  const [behaviourDrift, setBehaviourDrift] = useState<BehaviourDriftOutput | null>(null);
+  const [programmeEngineData, setProgrammeEngineData] = useState<ProgrammeData | null>(null);
+  const [selectedPhase, setSelectedPhase] = useState<number>(0);
+  const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const lastDecisionLogDateRef = useRef<string | null>(null);
+  const guardrailLoggedRef = useRef(false);
+  const simplificationLoggedRef = useRef(false);
   const router = useRouter();
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -120,6 +183,82 @@ export default function ProgrammePage() {
 
     load();
   }, []);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    fetch("/api/injuries")
+      .then((r) => (r.ok ? r.json() : { entries: [] }))
+      .then((d) => setInjuries(d.entries ?? []))
+      .catch(() => setInjuries([]));
+  }, [profile?.id]);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    fetch("/api/behaviour-drift")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => (d ? setBehaviourDrift(d as BehaviourDriftOutput) : setBehaviourDrift(null)))
+      .catch(() => setBehaviourDrift(null));
+  }, [profile?.id]);
+
+  useEffect(() => {
+    setProgrammeEngineData(PerformanceEngine.getProgrammeData());
+    const unsubRecalc = subscribePerformance("stateRecalculated", () => {
+      setProgrammeEngineData(PerformanceEngine.getProgrammeData());
+    });
+    const unsubProg = subscribePerformance("programmeUpdated", () => {
+      setProgrammeEngineData(PerformanceEngine.getProgrammeData());
+    });
+    return () => {
+      unsubRecalc();
+      unsubProg();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (profile?.current_week == null) return;
+    const w = profile.current_week;
+    const phase0Weeks = programme.phases[0]?.duration ?? 6;
+    if (w <= phase0Weeks) {
+      setSelectedPhase(0);
+      setSelectedWeek(w);
+    } else {
+      setSelectedPhase(1);
+      setSelectedWeek(Math.min(w - phase0Weeks, programme.phases[1]?.duration ?? 4));
+    }
+  }, [profile?.current_week]);
+
+  useEffect(() => {
+    const progPhase = programme.phases[selectedPhase];
+    if (!progPhase || selectedWeek <= progPhase.duration) return;
+    setSelectedWeek(progPhase.duration);
+  }, [selectedPhase, selectedWeek]);
+
+  useEffect(() => {
+    if (!profile) return;
+    const gr = getAdaptiveGuardrails({
+      ...profile,
+      fatigue_score: profile.fatigue_score,
+      readiness_score: profile.readiness_score,
+      sleep_score: profile.sleep_score,
+      stress_level: profile.stress_level,
+      activeInjuries: injuries,
+      plannedSessions: profile.days_per_week ?? 4,
+    });
+    if (gr.reasons.length > 0 && !guardrailLoggedRef.current) {
+      guardrailLoggedRef.current = true;
+      fetch("/api/decision-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          decisionType: "guardrail_applied",
+          adjustmentMade: gr.reasons.join(" "),
+          explanation: gr.reasons.join(" "),
+          triggerVariables: { reasons: gr.reasons },
+        }),
+      }).catch(() => {});
+    }
+    if (gr.reasons.length === 0) guardrailLoggedRef.current = false;
+  }, [profile, injuries]);
 
   useEffect(() => {
     if (!videoModal) return;
@@ -150,6 +289,55 @@ export default function ProgrammePage() {
       sleep: (profile.checkin_sleep as "poor" | "okay" | "good") ?? "good",
     });
   }, [checkinOpen, profile, todayStr]);
+
+  useEffect(() => {
+    if (!profile?.id || !behaviourDrift?.simplificationRecommended || simplificationLoggedRef.current) return;
+    simplificationLoggedRef.current = true;
+    fetch("/api/decision-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        decisionType: "behaviour_drift_simplification",
+        adjustmentMade: "Weekly volume reduced 10–15%; submax bias applied.",
+        explanation: "Engagement trending down — simplifying architecture to protect adherence.",
+        triggerVariables: {
+          frictionIndex: behaviourDrift.frictionIndex,
+          complianceVelocity: behaviourDrift.complianceVelocity,
+          engagementLevel: behaviourDrift.engagementLevel,
+        },
+      }),
+    }).catch(() => {});
+  }, [profile?.id, behaviourDrift?.simplificationRecommended, behaviourDrift?.frictionIndex, behaviourDrift?.complianceVelocity, behaviourDrift?.engagementLevel]);
+
+  useEffect(() => {
+    if (!profile?.id || lastDecisionLogDateRef.current === todayStr) return;
+    const risk = getRiskSignals(profile);
+    let adapt: AdaptationLevel = "normal";
+    if (risk.shouldReduceVolume || risk.shouldReduceIntensity) adapt = "reduce";
+    else if (profile.checkin_date === todayStr) {
+      const r = profile.checkin_readiness ?? 7;
+      const f = profile.checkin_feel ?? "okay";
+      const pain = profile.checkin_pain ?? "none";
+      const energy = profile.checkin_energy ?? "medium";
+      const sleep = profile.checkin_sleep ?? "okay";
+      if (pain === "yes" || f === "poor" || energy === "low" || sleep === "poor" || r < 5) adapt = "reduce";
+    }
+    if (adapt !== "reduce") return;
+    lastDecisionLogDateRef.current = todayStr;
+    supabase.from("decision_logs").insert({
+      profile_id: profile.id,
+      decision_type: "volume_reduction",
+      trigger_variables: {
+        fatigue_risk: risk.fatigueRisk,
+        readiness: profile.checkin_readiness ?? null,
+        sleep: profile.checkin_sleep ?? null,
+        checkin_date: profile.checkin_date ?? null,
+      },
+      threshold_breached: risk.shouldReduceIntensity ? "fatigue_risk_high" : "fatigue_risk_volume",
+      adjustment_made: "Volume and intensity reduced today",
+      explanation: "Programme adapted due to recovery bandwidth and fatigue risk. Volume and intensity reduced to protect adaptation.",
+    });
+  }, [profile, todayStr]);
 
   async function submitCheckin() {
     setCheckinSubmitting(true);
@@ -198,6 +386,8 @@ export default function ProgrammePage() {
     (100 - (p.stress_level || 40)) * 0.4;
 
   function getAdaptation(): AdaptationLevel {
+    const risk = getRiskSignals(p);
+    if (risk.shouldReduceVolume || risk.shouldReduceIntensity) return "reduce";
     if (p.checkin_date !== todayStr) return "normal";
     const readiness = p.checkin_readiness ?? 7;
     const feel = p.checkin_feel ?? "okay";
@@ -211,7 +401,16 @@ export default function ProgrammePage() {
     return "normal";
   }
 
-  const adaptation = getAdaptation();
+  const programmeInjuryAdjustment = PerformanceEngine.getProgrammeInjuryAdjustment();
+  const adaptation: AdaptationLevel =
+    programmeInjuryAdjustment.reduceIntensity ? "reduce" : getAdaptation();
+
+  const weeklyBriefData = generateWeeklyBrief({
+    ...p,
+    phase,
+    macrocycle,
+    current_week: week,
+  });
 
   const readinessBias =
     p.readiness_score > 75 ? 1.05 :
@@ -229,6 +428,16 @@ export default function ProgrammePage() {
   const intensityScale =
     readinessBias * fatigueBias * (isDeload ? 0.85 : 1);
 
+  const guardrails = getAdaptiveGuardrails({
+    ...p,
+    fatigue_score: p.fatigue_score,
+    readiness_score: p.readiness_score,
+    sleep_score: p.sleep_score,
+    stress_level: p.stress_level,
+    activeInjuries: injuries,
+    plannedSessions: daysPerWeek,
+  });
+
   const experience = p.experience?.toLowerCase() || "beginner";
 
   const setsMain =
@@ -241,7 +450,7 @@ export default function ProgrammePage() {
     experience.includes("intermediate") ? "7–8" :
     "6–7";
 
-  function prescribe(base: number) {
+  function formatIntensityPct(base: number) {
     if (!p.strength_upper || !p.strength_lower)
       return `RPE ${rpeTarget}`;
 
@@ -303,8 +512,12 @@ export default function ProgrammePage() {
   function buildSession(dayIndex: number, adapt: AdaptationLevel) {
     const recoveryDay = dayIndex === Math.floor(daysPerWeek / 2);
 
-    const volScale = adapt === "reduce" ? 0.6 : adapt === "increase" ? 1.2 : 1;
-    const intensityScaleAdapt = adapt === "reduce" ? 0.85 : adapt === "increase" ? 1.05 : 1;
+    let volScale = adapt === "reduce" ? 0.6 : adapt === "increase" ? 1.2 : 1;
+    let intensityScaleAdapt = adapt === "reduce" ? 0.85 : adapt === "increase" ? 1.05 : 1;
+    if (behaviourDrift?.simplificationRecommended) {
+      volScale *= 0.85;
+      intensityScaleAdapt *= 0.95;
+    }
     const effectiveIntensity = intensityScale * intensityScaleAdapt;
     const setsAdapted = Math.max(2, Math.round(setsMain * volScale));
     const mainLiftAlt = adapt === "reduce" ? " (or Goblet Squat if pain)" : "";
@@ -500,13 +713,15 @@ export default function ProgrammePage() {
     const cardExercises: { letter: string; title: string; prescription: string; rest?: string }[] = [];
     const rpeT = rpeTarget;
 
+    const pctA = applyIntensityCap(0.8, guardrails);
+    const pctB = applyIntensityCap(0.75, guardrails);
     cardExercises.push({
       letter: "A",
       title: EXERCISE_DISPLAY_NAMES[mainLiftKeys[0]] ?? mainLift.split(" (or")[0].trim(),
       prescription: prescribe(benchmarks, mainLiftKeys[0], {
         sets: setsAdapted,
         reps: "3–5",
-        percentage: 0.8,
+        percentage: pctA,
         rpeFallback: rpeT,
       }).display,
       rest: "2–3 min",
@@ -517,7 +732,7 @@ export default function ProgrammePage() {
       prescription: prescribe(benchmarks, secondaryLiftKeys[0], {
         sets: setsAdapted,
         reps: "5–6",
-        percentage: 0.75,
+        percentage: pctB,
         rpeFallback: rpeT,
       }).display,
       rest: "2 min",
@@ -560,7 +775,50 @@ export default function ProgrammePage() {
     (_, i) => buildSession(i, adaptation)
   );
 
-  async function completeSession(name: string) {
+  /* Programme data from /data/programmes.ts: phase → week → days (unique per week/day) */
+  const programmePhase = programme.phases[selectedPhase];
+  const phaseWeekIndex = Math.min(Math.max(0, selectedWeek - 1), (programmePhase?.weeks?.length ?? 1) - 1);
+  const weekData = programmePhase?.weeks?.[phaseWeekIndex];
+  const programmeDays = weekData?.days ?? [];
+
+  function mapProgrammeBlockToSessionBlock(b: ProgrammeSessionBlock): SessionBlockData {
+    if (b.type === "performanceNotes") {
+      return { type: "performanceNotes", text: b.text };
+    }
+    return {
+      type: b.type,
+      exercises: b.exercises ?? [],
+    };
+  }
+
+  function mapProgrammeDayToWeekDay(d: ProgrammeDayFromData): ProgrammeDayData {
+    return {
+      day: d.day,
+      type: d.type,
+      title: d.title,
+      duration: d.duration,
+      performanceNotes: undefined,
+      blocks: d.blocks.map(mapProgrammeBlockToSessionBlock),
+    };
+  }
+
+  const programmeWeekData: ProgrammeWeekData = {
+    week: selectedWeek,
+    days: programmeDays.map(mapProgrammeDayToWeekDay),
+  };
+
+  const programmeAdvisories = getAdvisories({
+    readiness: p.checkin_readiness ?? 7,
+    feel: (p.checkin_feel as "good" | "okay" | "poor") ?? "okay",
+    pain: (p.checkin_pain as "none" | "yes") ?? "none",
+    painAreas: p.checkin_pain_areas ?? null,
+    energy: (p.checkin_energy as "low" | "medium" | "high") ?? "medium",
+    sleep: (p.checkin_sleep as "poor" | "okay" | "good") ?? "okay",
+    adaptation,
+    sessionFocus: "Lower body",
+  });
+
+  async function completeSession(name: string, sessionTitle?: string) {
     await supabase.from("session_logs").insert({
       profile_id: p.id,
       week,
@@ -569,37 +827,64 @@ export default function ProgrammePage() {
       completed: true,
     });
 
+    const focus =
+      sessionTitle?.split(" · ")[0]?.trim() ||
+      (name.toLowerCase().includes("lower") ? "Lower body" : name.toLowerCase().includes("upper") ? "Upper body" : null);
+
     await supabase
       .from("profiles")
       .update({
         fatigue_score: p.fatigue_score + 5,
+        ...(focus ? { last_session_focus: focus } : {}),
       })
       .eq("id", p.id);
 
+    setDebriefSessionName(name);
+    setDebriefForm({ howFelt: 3, niggles: "", readyNext: 3 });
+    setDebriefOpen(true);
+  }
+
+  async function submitDebrief() {
+    if (!debriefSessionName) return;
+    setDebriefSubmitting(true);
+    await supabase.from("session_debriefs").insert({
+      profile_id: p.id,
+      session_name: debriefSessionName,
+      week,
+      how_felt: debriefForm.howFelt,
+      niggles: debriefForm.niggles.trim() || null,
+      ready_next: debriefForm.readyNext,
+    });
+    setDebriefSubmitting(false);
+    setDebriefOpen(false);
+    setDebriefSessionName(null);
     window.location.reload();
   }
 
-  return (
-    <div className="outer">
-      <div className="topNav">
-        <div className="logo">Performance Pathfinder</div>
-        <div className="tabs">
-          <button onClick={() => router.push("/profile")}>
-            Dashboard
-          </button>
-          <button className="active">
-            Programme
-          </button>
-          <button onClick={() => router.push("/checkin")}>
-            Check-In
-          </button>
-          <button onClick={() => router.push("/benchmarks")}>
-            Benchmarks
-          </button>
-        </div>
-      </div>
+  const pathname = usePathname();
 
-      <div className="container">
+  return (
+    <RequireAuth>
+      <OSLayer>
+        <div className="outer">
+          <nav className="programmeNav">
+            <div className="programmeBrand">PERFORMANCE PATHFINDER OS</div>
+            <div className="programmeTabs">
+              <NavTab href="/profile" label="Dashboard" pathname={pathname} />
+              <NavTab href="/programme" label="Programme" pathname={pathname} />
+              <NavTab href="/tactical" label="Tactical" pathname={pathname} />
+              <NavTab href="/tactical/input" label="Daily Input" pathname={pathname} />
+              <NavTab href="/tactical/radar" label="Radar" pathname={pathname} />
+              <NavTab href="/tactical/map" label="Readiness Map" pathname={pathname} />
+              <NavTab href="/tactical/command" label="Command Readiness" pathname={pathname} />
+              <NavTab href="/nutrition" label="Nutrition" pathname={pathname} />
+              <NavTab href="/strategy" label="Strategy" pathname={pathname} />
+              <NavTab href="/benchmarks" label="Benchmarks" pathname={pathname} />
+              <NavTab href="/settings" label="Settings" pathname={pathname} />
+            </div>
+          </nav>
+
+          <div className="container">
         <div className="header">
           <div className="phase">
             WEEK {week} · {phase} · {macrocycle}
@@ -656,91 +941,113 @@ export default function ProgrammePage() {
           )}
         </div>
 
-        <div className="weekGrid">
-          {sessions.map((day, i) => (
-            <div key={i} className="dayCard">
-              <div
-                className="dayHeader"
-                onClick={() =>
-                  setExpanded(expanded === i ? null : i)
-                }
-              >
-                {day.title}
-              </div>
-
-              {expanded === i && (
-                <div className="blocks">
-                  {"card" in day && day.card && (
-                    <div className="programmeCardWrap">
-                      <ProgrammeCard
-                        sessionTitle={day.card.sessionTitle}
-                        sessionSubtitle={day.card.sessionSubtitle}
-                        duration={day.card.duration}
-                        intensity={day.card.intensity}
-                        primaryFocus={day.card.primaryFocus}
-                        exercises={day.card.exercises}
-                      />
-                    </div>
-                  )}
-                  {day.blocks.map((block, j) => {
-                    const videos = getExerciseVideos(block.exerciseKeys || []);
-                    const lines = block.detailLines && block.detailLines.length > 0
-                      ? block.detailLines
-                      : [block.detail];
-                    return (
-                      <div key={j} className="block">
-                        <div className="section">
-                          {block.section}
-                        </div>
-                        <div className="detailList">
-                          {lines.map((line, k) => (
-                            <div key={k} className="detail">
-                              {line}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="notes">
-                          {block.notes}
-                        </div>
-                        {videos.length > 0 && (
-                          <div className="exerciseVideos">
-                            <span className="videoLabel">Videos:</span>
-                            {videos.map((v) => (
-                              <button
-                                key={v.videoId + v.label}
-                                type="button"
-                                className="videoBtn"
-                                onClick={() =>
-                                  setVideoModal({
-                                    videoId: v.videoId,
-                                    label: v.label,
-                                    startSeconds: v.startSeconds,
-                                    endSeconds: v.endSeconds,
-                                  })
-                                }
-                              >
-                                {v.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  <button
-                    className="completeBtn"
-                    onClick={() =>
-                      completeSession(day.title)
-                    }
-                  >
-                    Mark Complete
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="advisoriesWrap">
+          <DailyAdvisories advisories={programmeAdvisories} />
         </div>
+
+        {programmeEngineData && (programmeEngineData.injuryAdjusted || programmeEngineData.roadmapPhases.length > 0) && (
+          <div className="programmeEngineBanner" style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(39, 224, 166, 0.08)", border: "1px solid rgba(39, 224, 166, 0.2)", borderRadius: 12, fontSize: 12 }}>
+            <strong style={{ letterSpacing: "0.04em" }}>Strategy roadmap</strong>
+            {programmeEngineData.injuryAdjusted && (
+              <span style={{ display: "block", marginTop: 4, opacity: 0.9 }}>
+                Foundation extended by {programmeEngineData.foundationExtendedWeeks} week(s). Volume cap {programmeEngineData.volumeCapPercent ?? 100}%.
+              </span>
+            )}
+            {programmeEngineData.roadmapPhases.length > 0 && !programmeEngineData.injuryAdjusted && (
+              <span style={{ display: "block", marginTop: 4, opacity: 0.9 }}>
+                Phases: {programmeEngineData.roadmapPhases.map((ph) => `${ph.name} (W${ph.startWeek}–W${ph.endWeek})`).join(" · ")}
+              </span>
+            )}
+          </div>
+        )}
+
+        {programmeInjuryAdjustment.showAdjustmentBanner && (
+          <div className="programmeInjuryAdjustmentBanner" style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.25)", borderRadius: 12, fontSize: 12 }}>
+            <strong style={{ letterSpacing: "0.04em" }}>Injury adjustment</strong>
+            <span style={{ display: "block", marginTop: 4, opacity: 0.9 }}>
+              {programmeInjuryAdjustment.swapExercises && "Exercises swapped for joint-friendly options. "}
+              {programmeInjuryAdjustment.reduceIntensity && "Intensity reduced. "}
+              {programmeInjuryAdjustment.reason ?? "Programme adapted for current limitation."}
+            </span>
+          </div>
+        )}
+
+        <div className="briefAndLog">
+          <div className="briefWrap">
+            <WeeklyBrief
+              weekNumber={weeklyBriefData.weekNumber}
+              phaseIntent={weeklyBriefData.phaseIntent}
+              systemBias={weeklyBriefData.systemBias}
+              primaryLimiter={weeklyBriefData.primaryLimiter}
+              recoveryBandwidth={weeklyBriefData.recoveryBandwidth}
+              whyThisWeek={weeklyBriefData.whyThisWeek}
+            />
+          </div>
+          <div className="decisionLogWrap performanceAdjustmentsWrap">
+            <div className="performanceAdjustmentsTitle">Performance adjustments</div>
+            <div className="performanceAdjustmentsSignal">
+              <div className="performanceAdjustmentsSignalTitle">This week</div>
+              <div className="performanceAdjustmentsSignalSub">{weeklyBriefData.whyThisWeek}</div>
+            </div>
+            {p.readiness_score >= 65 && (
+              <div className="performanceAdjustmentsSignal">
+                <div className="performanceAdjustmentsSignalTitle">Readiness</div>
+                <div className="performanceAdjustmentsSignalSub">You&apos;re in a good window to train. Programme is aligned to your current state.</div>
+              </div>
+            )}
+            {programmeAdvisories.length > 0 && (
+              <div className="performanceAdjustmentsSignal">
+                <div className="performanceAdjustmentsSignalTitle">{programmeAdvisories[0].label}</div>
+                <div className="performanceAdjustmentsSignalSub">{programmeAdvisories[0].message}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="weekIntro">
+          <h2 className="weekIntroTitle">Your sessions this week</h2>
+          <p className="weekIntroSub">Tap a day to see the full session. Complete your check-in to adapt volume and intensity.</p>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, letterSpacing: "0.08em", opacity: 0.7, marginBottom: 8 }}>
+            PHASE: {programmePhase?.name ?? macrocycle}
+            {programme.phases.length > 1 && (
+              <span style={{ marginLeft: 12 }}>
+                {programme.phases.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedPhase(i)}
+                    style={{
+                      marginRight: 8,
+                      padding: "4px 10px",
+                      fontSize: 11,
+                      background: selectedPhase === i ? "rgba(47,128,237,0.3)" : "rgba(255,255,255,0.06)",
+                      border: selectedPhase === i ? "1px solid rgba(47,128,237,0.5)" : "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 6,
+                      color: "inherit",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Phase {i + 1}
+                  </button>
+                ))}
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 13, opacity: 0.85 }}>Duration: {programmePhase?.duration ?? 6} weeks</div>
+        </div>
+        <WeekSelector
+          totalWeeks={programmePhase?.duration ?? 6}
+          selectedWeek={selectedWeek}
+          onWeekChange={setSelectedWeek}
+        />
+        <ProgrammeWeekView
+          weekData={programmeWeekData}
+          expandedDayId={expandedDay}
+          onExpandedDayChange={setExpandedDay}
+        />
 
         {videoModal && (
           <div
@@ -897,53 +1204,133 @@ export default function ProgrammePage() {
             </div>
           </div>
         )}
-      </div>
 
-      <style jsx>{`
+        {debriefOpen && (
+          <div
+            className="videoModalBackdrop checkinBackdrop"
+            onClick={() => setDebriefOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Post-session debrief"
+          >
+            <div className="checkinModal" onClick={(e) => e.stopPropagation()}>
+              <div className="videoModalHeader">
+                <span>Quick debrief — {debriefSessionName}</span>
+                <button
+                  type="button"
+                  className="videoModalClose"
+                  onClick={() => setDebriefOpen(false)}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="checkinIntro">
+                2–3 quick questions to recalibrate next session.
+              </p>
+              <div className="checkinForm">
+                <label>
+                  <span>1. How did that feel? (1–5)</span>
+                  <select
+                    value={debriefForm.howFelt}
+                    onChange={(e) =>
+                      setDebriefForm((f) => ({ ...f, howFelt: +e.target.value }))
+                    }
+                  >
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>{n} — {n <= 2 ? "rough" : n === 3 ? "okay" : "good"}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>2. Any niggles or pain?</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. knee, lower back"
+                    value={debriefForm.niggles}
+                    onChange={(e) =>
+                      setDebriefForm((f) => ({ ...f, niggles: e.target.value }))
+                    }
+                    className="checkinText"
+                  />
+                </label>
+                <label>
+                  <span>3. Ready for next session? (1–5)</span>
+                  <select
+                    value={debriefForm.readyNext}
+                    onChange={(e) =>
+                      setDebriefForm((f) => ({ ...f, readyNext: +e.target.value }))
+                    }
+                  >
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>{n} — {n <= 2 ? "need recovery" : n === 3 ? "neutral" : "ready"}</option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="completeBtn checkinSubmit"
+                  onClick={submitDebrief}
+                  disabled={debriefSubmitting}
+                >
+                  {debriefSubmitting ? "Saving…" : "Done"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+          </div>
+        </div>
+
+        <style jsx>{`
         .outer {
+          min-height: 100vh;
           background:
-            radial-gradient(circle at 20% 10%, rgba(47,128,237,0.15), transparent 40%),
-            radial-gradient(circle at 80% 90%, rgba(39,224,166,0.12), transparent 40%),
-            #0A1220;
-          min-height:100vh;
-          color:white;
+            radial-gradient(circle at 20% 10%, rgba(47,128,237,0.12), transparent 40%),
+            radial-gradient(circle at 80% 90%, rgba(39,224,166,0.08), transparent 40%),
+            linear-gradient(180deg, #0a0a0f 0%, #0f1117 50%, #0a0a0f 100%);
+          color: #fff;
+          position: relative;
+          overflow-x: hidden;
         }
-
-        .topNav {
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          padding:20px 40px;
-          border-bottom:1px solid rgba(255,255,255,0.08);
+        .outer::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+          background-size: 40px 40px;
+          opacity: 0.4;
+          pointer-events: none;
         }
-
-        .logo {
-          font-weight:600;
-          letter-spacing:1px;
-          opacity:0.8;
+        .programmeNav {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px 40px;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          position: relative;
+          z-index: 1;
         }
-
-        .tabs button {
-          margin-left:16px;
-          background:none;
-          border:none;
-          color:white;
-          cursor:pointer;
-          opacity:0.6;
+        .programmeBrand {
+          font-size: 12px;
+          letter-spacing: 2px;
+          opacity: 0.6;
         }
-
-        .tabs .active {
-          opacity:1;
-          font-weight:600;
+        .programmeTabs {
+          display: flex;
+          gap: 30px;
         }
-
         .container {
-          max-width:1400px;
-          margin:60px auto;
-          padding:0 40px;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 40px;
+          position: relative;
+          z-index: 1;
         }
 
-        .header { margin-bottom:40px; }
+        .header { margin-bottom:48px; }
 
         .phase {
           font-size:12px;
@@ -952,8 +1339,11 @@ export default function ProgrammePage() {
         }
 
         .headline {
-          font-size:32px;
-          margin:12px 0;
+          font-size:28px;
+          font-weight:700;
+          margin:16px 0 8px;
+          letter-spacing:-0.02em;
+          line-height:1.25;
         }
 
         .meta {
@@ -997,6 +1387,10 @@ export default function ProgrammePage() {
           background:linear-gradient(135deg, rgba(47,128,237,0.12), rgba(39,224,166,0.08));
           border:1px solid rgba(47,128,237,0.35);
           border-radius:16px;
+        }
+
+        .advisoriesWrap {
+          margin-bottom:28px;
         }
 
         .dailyCheckinBtn {
@@ -1097,48 +1491,177 @@ export default function ProgrammePage() {
 
         .checkinSubmit { margin-top:8px; }
 
+        .briefAndLog {
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:28px;
+          margin-bottom:40px;
+        }
+        @media (max-width: 768px) {
+          .briefAndLog { grid-template-columns:1fr; }
+        }
+        .briefWrap, .decisionLogWrap { min-width:0; }
+
+        .performanceAdjustmentsWrap {
+          background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+          border: 1px solid rgba(255,255,255,0.06);
+          border-radius: 14px;
+          padding: 16px 20px;
+        }
+        .performanceAdjustmentsTitle {
+          font-size: 11px;
+          letter-spacing: 0.08em;
+          opacity: 0.65;
+          margin-bottom: 12px;
+        }
+        .performanceAdjustmentsSignal {
+          background: rgba(255,255,255,0.05);
+          padding: 18px;
+          border-radius: 16px;
+          margin-bottom: 12px;
+        }
+        .performanceAdjustmentsSignal:last-child { margin-bottom: 0; }
+        .performanceAdjustmentsSignalTitle { font-weight: 600; margin-bottom: 4px; }
+        .performanceAdjustmentsSignalSub { opacity: 0.6; font-size: 13px; line-height: 1.4; }
+
+        .weekIntro {
+          margin-bottom:28px;
+        }
+        .weekIntroTitle {
+          font-size:18px;
+          font-weight:600;
+          margin:0 0 8px;
+          letter-spacing:-0.01em;
+        }
+        .weekIntroSub {
+          font-size:14px;
+          opacity:0.8;
+          margin:0;
+          line-height:1.5;
+        }
+
         .weekGrid {
           display:grid;
-          grid-template-columns:repeat(3,1fr);
-          gap:30px;
+          grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));
+          gap:20px;
+        }
+        @media (max-width: 768px) {
+          .weekGrid { grid-template-columns:1fr; }
         }
 
         .dayCard {
-          background:rgba(255,255,255,0.06);
-          padding:22px;
-          border-radius:20px;
+          background:rgba(255,255,255,0.05);
+          border:1px solid rgba(255,255,255,0.08);
+          border-radius:16px;
+          overflow:hidden;
+          transition:background 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        .dayCardExpanded {
+          background:rgba(255,255,255,0.07);
+          border-color:rgba(47,128,237,0.25);
+          box-shadow:0 8px 32px rgba(0,0,0,0.3);
         }
 
         .dayHeader {
-          font-weight:600;
-          cursor:pointer;
-        }
-
-        .blocks { margin-top:16px; }
-
-        .programmeCardWrap { margin-bottom:24px; }
-
-        .block { margin-bottom:16px; }
-
-        .section {
-          font-size:12px;
-          opacity:0.6;
-        }
-
-        .detailList {
+          width:100%;
           display:flex;
-          flex-direction:column;
-          gap:6px;
+          align-items:center;
+          justify-content:space-between;
+          padding:18px 20px;
+          font-size:15px;
+          font-weight:600;
+          text-align:left;
+          color:inherit;
+          background:none;
+          border:none;
+          cursor:pointer;
+          transition:background 0.2s;
         }
-
-        .detail {
-          font-size:14px;
-          font-weight:500;
+        .dayHeader:hover {
+          background:rgba(255,255,255,0.05);
         }
-
-        .notes {
-          font-size:12px;
+        .dayHeaderLabel { flex:1; }
+        .dayHeaderChevron {
+          font-size:10px;
           opacity:0.7;
+          margin-left:8px;
+        }
+
+        .blocks {
+          padding:0 20px 24px;
+          margin-top:0;
+          border-top:1px solid rgba(255,255,255,0.06);
+          animation:dayExpand 0.25s ease-out;
+        }
+        @keyframes dayExpand {
+          from { opacity:0; }
+          to { opacity:1; }
+        }
+
+        .programmeCardWrap { margin:20px 0 28px; }
+
+        .blockCard {
+          margin-bottom:20px;
+          padding:20px;
+          background:rgba(255,255,255,0.04);
+          border:1px solid rgba(255,255,255,0.08);
+          border-radius:14px;
+        }
+
+        .blockCardHeader {
+          display:flex;
+          align-items:center;
+          gap:10px;
+          margin-bottom:14px;
+        }
+
+        .blockCardStep {
+          font-size:11px;
+          font-weight:600;
+          text-transform:uppercase;
+          letter-spacing:0.06em;
+          color:#2F80ED;
+          opacity:0.95;
+        }
+
+        .blockCardSection {
+          font-size:15px;
+          font-weight:600;
+          margin:0;
+          color:#fff;
+        }
+
+        .blockDetailList {
+          list-style:none;
+          margin:0 0 12px;
+          padding:0;
+        }
+
+        .blockDetailItem {
+          font-size:15px;
+          font-weight:500;
+          line-height:1.5;
+          padding:6px 0;
+          border-bottom:1px solid rgba(255,255,255,0.05);
+        }
+        .blockDetailItem:last-child { border-bottom:none; }
+
+        .blockNotes {
+          display:flex;
+          gap:10px;
+          margin-top:12px;
+          padding:12px 14px;
+          background:rgba(0,0,0,0.2);
+          border-radius:10px;
+          border-left:3px solid rgba(47,128,237,0.5);
+        }
+
+        .blockNotesIcon { font-size:14px; flex-shrink:0; }
+        .blockNotesText {
+          font-size:13px;
+          opacity:0.85;
+          line-height:1.5;
+          margin:0;
         }
 
         .exerciseVideos {
@@ -1146,27 +1669,67 @@ export default function ProgrammePage() {
           flex-wrap:wrap;
           align-items:center;
           gap:8px;
-          margin-top:10px;
+          margin-top:14px;
         }
 
         .videoLabel {
           font-size:11px;
-          opacity:0.65;
-          margin-right:4px;
+          text-transform:uppercase;
+          letter-spacing:0.05em;
+          opacity:0.7;
+          margin-right:8px;
         }
 
         .videoBtn {
-          padding:4px 10px;
-          font-size:12px;
-          background:rgba(47,128,237,0.25);
-          border:1px solid rgba(47,128,237,0.5);
-          border-radius:6px;
+          padding:8px 14px;
+          font-size:13px;
+          background:rgba(47,128,237,0.2);
+          border:1px solid rgba(47,128,237,0.4);
+          border-radius:8px;
           color:#93c5fd;
           cursor:pointer;
+          transition:background 0.2s, border-color 0.2s;
         }
 
         .videoBtn:hover {
-          background:rgba(47,128,237,0.4);
+          background:rgba(47,128,237,0.35);
+          border-color:rgba(47,128,237,0.6);
+        }
+
+        .sessionActions {
+          margin-top:24px;
+          padding:18px 20px;
+          background:rgba(47,128,237,0.08);
+          border:1px solid rgba(47,128,237,0.2);
+          border-radius:12px;
+          display:flex;
+          flex-wrap:wrap;
+          align-items:center;
+          gap:12px;
+        }
+
+        .sessionActionBtn {
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          padding:12px 20px;
+          background:rgba(47,128,237,0.3);
+          border:1px solid rgba(47,128,237,0.5);
+          border-radius:10px;
+          color:#fff;
+          font-size:14px;
+          font-weight:600;
+          cursor:pointer;
+          transition:opacity 0.2s, transform 0.2s;
+        }
+        .sessionActionBtn:hover {
+          opacity:0.95;
+          transform:translateY(-1px);
+        }
+        .sessionActionIcon { font-size:16px; }
+        .sessionActionHint {
+          font-size:13px;
+          opacity:0.75;
         }
 
         .videoModalBackdrop {
@@ -1225,15 +1788,28 @@ export default function ProgrammePage() {
         }
 
         .completeBtn {
-          margin-top:16px;
-          padding:10px 16px;
-          background:#2F80ED;
+          margin-top:24px;
+          padding:14px 24px;
+          width:100%;
+          max-width:280px;
+          background:linear-gradient(135deg, #2F80ED, #2563eb);
           border:none;
-          border-radius:8px;
+          border-radius:12px;
           color:white;
+          font-size:15px;
+          font-weight:600;
           cursor:pointer;
+          transition:opacity 0.2s, transform 0.2s;
+        }
+        .completeBtn:hover {
+          opacity:0.95;
+          transform:translateY(-1px);
+        }
+        .completeBtn:active {
+          transform:translateY(0);
         }
       `}</style>
-    </div>
+      </OSLayer>
+    </RequireAuth>
   );
 }

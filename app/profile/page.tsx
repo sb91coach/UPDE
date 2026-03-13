@@ -2,11 +2,14 @@
 
 import UPDEDashboard from "@/app/components/UPDEDashboard";
 import OSLayer from "@/app/components/OSLayer";
+import { RequireAuth } from "@/lib/requireAuth";
 
 export default function ProfilePage() {
   return (
-    <OSLayer>
-      <UPDEDashboard />
-    </OSLayer>
+    <RequireAuth>
+      <OSLayer>
+        <UPDEDashboard />
+      </OSLayer>
+    </RequireAuth>
   );
 }

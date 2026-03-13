@@ -1,0 +1,177 @@
+"use client";
+
+import { useState, useMemo, useRef } from "react";
+import SessionBlock, { type SessionBlockData, type ExerciseData, getTotalSetsFromBlocks } from "./SessionBlock";
+import SessionProgress from "./SessionProgress";
+import SessionOverview from "./SessionOverview";
+import SessionSummary from "./SessionSummary";
+
+/**
+ * Day type for colour coding: Red = high load, Green = moderate, Recovery = light/off.
+ */
+export type DayType = "Red" | "Green" | "Recovery" | "Off";
+
+export type ProgrammeDayData = {
+  day: string;
+  type: DayType;
+  title: string;
+  duration: number;
+  performanceNotes?: string;
+  blocks: SessionBlockData[];
+};
+
+export type DayAccordionProps = {
+  day: ProgrammeDayData;
+  dayId: string;
+  expanded: boolean;
+  onToggle: () => void;
+  /** Session date for autosave (YYYY-MM-DD), default today */
+  sessionDate?: string;
+  unit?: "kg" | "lb";
+  showRpe?: boolean;
+};
+
+const DAY_INDICATOR: Record<DayType, { char: string; color: string }> = {
+  Red: { char: "🔴", color: "rgba(239,68,68,0.9)" },
+  Green: { char: "🟢", color: "rgba(39,224,166,0.9)" },
+  Recovery: { char: "⚪", color: "rgba(255,255,255,0.6)" },
+  Off: { char: "⚫", color: "rgba(255,255,255,0.4)" },
+};
+
+export default function DayAccordion({
+  day,
+  dayId,
+  expanded,
+  onToggle,
+  sessionDate: propsSessionDate,
+  unit = "kg",
+  showRpe = false,
+}: DayAccordionProps) {
+  const indicator = DAY_INDICATOR[day.type] ?? DAY_INDICATOR.Recovery;
+  const sessionDate = propsSessionDate ?? (typeof window !== "undefined" ? new Date().toISOString().slice(0, 10) : "");
+
+  const totalSets = useMemo(() => getTotalSetsFromBlocks(day.blocks), [day.blocks]);
+  const [completedByKey, setCompletedByKey] = useState<Record<string, number>>({});
+  const completedSets = useMemo(
+    () => Object.values(completedByKey).reduce((a, b) => a + b, 0),
+    [completedByKey]
+  );
+  const [completionTime, setCompletionTime] = useState<string | null>(null);
+  const completionRecorded = useRef(false);
+
+  if (totalSets > 0 && completedSets >= totalSets && !completionRecorded.current) {
+    completionRecorded.current = true;
+    const t = new Date();
+    setCompletionTime(t.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }));
+  }
+  if (completedSets < totalSets) completionRecorded.current = false;
+
+  const handleSetCompletionChange = (
+    blockIndex: number,
+    exerciseIndex: number,
+    completed: number
+  ) => {
+    setCompletedByKey((prev) => ({
+      ...prev,
+      [`${blockIndex}-${exerciseIndex}`]: completed,
+    }));
+  };
+
+  const allComplete = totalSets > 0 && completedSets >= totalSets;
+
+  return (
+    <div
+      style={{
+        marginBottom: 10,
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 14,
+        overflow: "hidden",
+      }}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-controls={`day-content-${dayId}`}
+        id={`day-header-${dayId}`}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 18px",
+          background: "none",
+          border: "none",
+          color: "inherit",
+          fontSize: 14,
+          fontWeight: 500,
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 14 }} aria-hidden>
+            {indicator.char}
+          </span>
+          <span>
+            {day.day} – {day.type} Day
+          </span>
+          {day.duration > 0 && (
+            <span style={{ opacity: 0.75, fontWeight: 400 }}>
+              ({day.duration} min)
+            </span>
+          )}
+        </span>
+        <span style={{ fontSize: 12, opacity: 0.8 }} aria-hidden>
+          {expanded ? "▼" : "▶"}
+        </span>
+      </button>
+
+      {expanded && (
+        <div
+          id={`day-content-${dayId}`}
+          role="region"
+          aria-labelledby={`day-header-${dayId}`}
+          style={{
+            padding: "0 18px 18px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          {totalSets > 0 && (
+            <SessionProgress
+              totalSets={totalSets}
+              completedSets={completedSets}
+              label="Session Progress"
+            />
+          )}
+
+          <SessionOverview
+            focus={day.title}
+            duration={day.duration > 0 ? day.duration : undefined}
+            objective={day.performanceNotes ?? "High force output, low fatigue"}
+          />
+
+          {day.blocks.map((block, i) => (
+            <SessionBlock
+              key={i}
+              block={block}
+              index={i}
+              sessionDate={sessionDate}
+              unit={unit}
+              showRpe={showRpe}
+              onSetCompletionChange={handleSetCompletionChange}
+            />
+          ))}
+
+          {allComplete && (
+            <SessionSummary
+              totalSetsCompleted={completedSets}
+              completionTime={completionTime ?? undefined}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

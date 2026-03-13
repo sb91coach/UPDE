@@ -165,29 +165,33 @@ FOR each programmed lift:
 
 ## Section 7 — System Architecture Refactor
 
-**Target structure:**
+**Target structure (implemented):**
 
 ```
 /engine
-  fatigueModel.ts
-  riskIndex.ts
-  systemBias.ts
-  prescriptionEngine.ts
-  benchmarkEngine.ts
-  momentumEngine.ts
+  benchmarkEngine.ts      ✅
+  prescriptionEngine.ts   ✅
+  fatigueModel.ts         ✅ (recovery bandwidth, fatigue score)
+  riskIndex.ts            ✅ (fatigue/adaptation risk, shouldReduce flags)
+  systemBias.ts           ✅ (classify system bias, phrase for brief)
+  momentumEngine.ts       ✅ (adaptation velocity, friction index)
+  weeklyBriefGenerator.ts ✅ (generateWeeklyBrief for WeeklyBrief UI)
+  decisionLog.ts          ✅ (logDecision for transparency)
+  (future: predictive / forecasting)
 
 /app/ui
-  ProgrammeCard.tsx
-  WeeklyBrief.tsx
-  DecisionLog.tsx
-  BenchmarkManager.tsx
+  ProgrammeCard.tsx       ✅
+  WeeklyBrief.tsx        ✅
+  DecisionLog.tsx        ✅ (supports thresholdBreached)
+  BenchmarkManager.tsx   ✅
 
 /lib/profile
-  benchmarkSchema.ts
-  identityModel.ts
+  benchmarkSchema.ts      ✅
+  benchmarkExerciseOptions.ts ✅
+  identityModel.ts       ✅ (classifyIdentity for dashboard/programme)
 ```
 
-Frontend stays clean; complexity in engine layer.
+Frontend stays clean; complexity in engine layer. See **docs/IMPLEMENTATION_ROADMAP.md** for phased checklist and next steps.
 
 ---
 
@@ -201,7 +205,7 @@ Frontend stays clean; complexity in engine layer.
 
 ---
 
-## Implemented (Phase 1)
+## Implemented (Phase 1 + Phase 2 stubs)
 
 | Item | Location |
 |------|----------|
@@ -210,13 +214,22 @@ Frontend stays clean; complexity in engine layer.
 | Prescription engine | `engine/prescriptionEngine.ts` |
 | Programme card | `app/ui/ProgrammeCard.tsx` |
 | Programme page | Builds `card` per session; renders ProgrammeCard when day expanded |
-| Migration | `supabase/migrations/20250225100000_add_performance_benchmarks.sql` |
-| WeeklyBrief, DecisionLog, BenchmarkManager | `app/ui/*.tsx` (placeholders) |
+| Migration (benchmarks) | `supabase/migrations/20250225100000_add_performance_benchmarks.sql` |
+| Migration (decision_logs) | `supabase/migrations/20250226000000_decision_logs.sql` |
+| Fatigue model | `engine/fatigueModel.ts` |
+| Risk index | `engine/riskIndex.ts` |
+| System bias | `engine/systemBias.ts` |
+| Momentum engine | `engine/momentumEngine.ts` |
+| Weekly brief generator | `engine/weeklyBriefGenerator.ts` |
+| Decision log writer | `engine/decisionLog.ts` |
+| Identity model | `lib/profile/identityModel.ts` |
+| Decision log API | `GET /api/decision-log` |
+| WeeklyBrief, DecisionLog, BenchmarkManager | `app/ui/*.tsx` (data-ready) |
 
 ## Next Steps
 
-**Phase 1 remaining:** API or profile page to update `performance_benchmarks`; optional auto-estimate 1RM from logs.
+See **docs/IMPLEMENTATION_ROADMAP.md** for the full checklist.
 
-**Phase 2:** decision_logs table + log writes; WeeklyBrief generator; momentum/identity; DecisionLog from DB.
+**Phase 2 wiring:** Call `logDecision()` from programme builder when adaptation is reduced; feed `generateWeeklyBrief(profile)` into WeeklyBrief on programme or dashboard; optionally show DecisionLog from GET /api/decision-log; use `getRiskSignals(profile)` in buildSession to reduce volume/intensity and log decisions.
 
-**Phase 3:** risk index, post-session debrief, forward steering.
+**Phase 3:** Post-session debrief (2–3 questions, friction flags); risk forecasting; forward steering.
