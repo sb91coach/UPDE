@@ -31,7 +31,7 @@ import WeekCalendarView from "@/app/components/programme/WeekCalendarView";
 import programme from "@/data/programmes";
 import type { ProgrammeDay as ProgrammeDayFromData, ProgrammeSessionBlock } from "@/data/programmes";
 import ProgrammeNavBar from "@/app/components/programme/ProgrammeNavBar";
-import { PaywallGate } from "@/app/components/PaywallGate";
+import { SoftPaywall } from "@/app/components/SoftPaywall";
 
 /* ======================================================
    PROFILE TYPE (linked from intake)
@@ -355,19 +355,6 @@ export default function ProgrammePage() {
   const p = profile;
 
   const isPro = p.subscription_tier === "pro" || p.subscription_tier === "elite";
-  if (!isPro) {
-    return (
-      <RequireAuth>
-        <OSLayer>
-          <PaywallGate
-            feature="Programme Engine"
-            description="Access your fully periodised training programme, session delivery, and adaptive progression logic."
-            tier="pro"
-          />
-        </OSLayer>
-      </RequireAuth>
-    );
-  }
 
   /* ======================================================
      DERIVED METRICS
@@ -855,7 +842,7 @@ export default function ProgrammePage() {
 
   return (
     <RequireAuth>
-      <OSLayer hideBottomNav={workoutMode}>
+      <OSLayer hideBottomNav={workoutMode} isPro={isPro}>
         <div className="outer">
           <div className="desktop-only-nav">
             <ProgrammeNavBar pathname={pathname} />
@@ -880,6 +867,48 @@ export default function ProgrammePage() {
             Built with intent. Structured for adaptation. Designed for operational performance.
             Clarity over complexity — human-first, data-informed.
           </p>
+
+          {!isPro && (
+            <div
+              className="preview-mode-banner"
+              style={{
+                background: "rgba(0,201,160,0.06)",
+                border: "1px solid rgba(0,201,160,0.15)",
+                borderRadius: 10,
+                padding: "12px 16px",
+                marginBottom: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#00C9A0", marginBottom: 2 }}>
+                  Preview mode
+                </div>
+                <div style={{ fontSize: 12, color: "rgba(238,240,244,0.45)", lineHeight: 1.4 }}>
+                  You&apos;re viewing your programme. Upgrade to start training.
+                </div>
+              </div>
+              <a
+                href="/upgrade"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "#00C9A0",
+                  border: "1px solid rgba(0,201,160,0.3)",
+                  padding: "7px 14px",
+                  borderRadius: 8,
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                  background: "rgba(0,201,160,0.08)",
+                }}
+              >
+                Upgrade →
+              </a>
+            </div>
+          )}
 
           <div className="meta">
             Strength {Math.round(strengthIndex)} ·
@@ -1044,6 +1073,7 @@ export default function ProgrammePage() {
                   sessionFocus={sessionFocus}
                   unit="kg"
                   showRpe={false}
+                  isPro={isPro}
                   onWorkoutModeChange={setWorkoutMode}
                   onPlayDemo={(exerciseName, demoUrl) => {
                     const key = exerciseName.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
@@ -1061,8 +1091,8 @@ export default function ProgrammePage() {
           </>
         ) : (
           <>
-            <div className="mobile-polish mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">This week</h2>
+            <div className="week-section mb-6">
+              <h2 className="week-section-title">This week</h2>
               <WeekCalendarView
                 weekData={programmeWeekData}
                 completedSessionNames={completedSessionNames}
@@ -1080,6 +1110,7 @@ export default function ProgrammePage() {
                   expandedDayId={expandedDay}
                   onExpandedDayChange={setExpandedDay}
                   onBeginSession={(dayId) => setSelectedDayId(dayId)}
+                  isPro={isPro}
                 />
               </div>
             </details>
@@ -1229,14 +1260,16 @@ export default function ProgrammePage() {
                     <option value="good">Good</option>
                   </select>
                 </label>
-                <button
-                  type="button"
-                  className="completeBtn checkinSubmit"
-                  onClick={submitCheckin}
-                  disabled={checkinSubmitting}
-                >
-                  {checkinSubmitting ? "Saving…" : "Save & adapt programme"}
-                </button>
+                <SoftPaywall isPro={isPro} feature="Daily Check-in">
+                  <button
+                    type="button"
+                    className="completeBtn checkinSubmit"
+                    onClick={() => isPro && submitCheckin()}
+                    disabled={checkinSubmitting}
+                  >
+                    {checkinSubmitting ? "Saving…" : "Save & adapt programme"}
+                  </button>
+                </SoftPaywall>
               </div>
             </div>
           </div>
@@ -1630,26 +1663,35 @@ export default function ProgrammePage() {
         .phaseSelectorScroll::-webkit-scrollbar { display: none; }
         .phasePill {
           flex-shrink: 0;
-          padding: 10px 18px;
-          min-height: 44px;
-          min-width: 44px;
+          min-width: 72px;
+          height: 36px;
+          padding: 0 14px;
           white-space: nowrap;
-          font-size: 13px;
-          font-weight: 500;
-          background: rgba(255,255,255,0.06);
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          background: rgba(255,255,255,0.03);
           border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 10px;
-          color: inherit;
+          border-radius: 8px;
+          color: rgba(238,240,244,0.4);
           cursor: pointer;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          transition: all 0.15s;
         }
         .phasePillActive {
-          background: rgba(0,201,160,0.2);
-          border-color: #00C9A0;
+          background: rgba(0,201,160,0.1);
+          border-color: rgba(0,201,160,0.3);
           color: #00C9A0;
-          font-weight: 600;
+          font-weight: 700;
+        }
+        .week-section-title {
+          font-size: 18px;
+          font-weight: 700;
+          letter-spacing: -0.5px;
+          color: #eef0f4;
+          margin-bottom: 16px;
         }
 
         .weekGrid {

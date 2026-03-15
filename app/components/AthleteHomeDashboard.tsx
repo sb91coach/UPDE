@@ -18,6 +18,12 @@ function readinessLabel(score: number): string {
   return "Recovery recommended";
 }
 
+function readinessDotColor(score: number): string {
+  if (score >= 75) return "#00c9a0";
+  if (score >= 55) return "#f59e0b";
+  return "#f04e37";
+}
+
 export default function AthleteHomeDashboard() {
   const [readinessScore, setReadinessScore] = useState<number | null>(null);
   const [todaySession, setTodaySession] = useState<TodaySession | null>(null);
@@ -60,7 +66,7 @@ export default function AthleteHomeDashboard() {
   if (loading) {
     return (
       <div className="mobile-polish min-h-[60vh] flex items-center justify-center">
-        <p className="text-gray-500 text-sm">Loading…</p>
+        <p className="text-white/40 text-sm">Loading…</p>
       </div>
     );
   }
@@ -78,22 +84,29 @@ export default function AthleteHomeDashboard() {
 
   return (
     <div className="mobile-polish flex flex-col space-y-6">
-      <h1 className="text-xl font-semibold text-gray-900">Today</h1>
+      <h1 className="text-white font-bold text-2xl tracking-tight">Today</h1>
 
       {/* Readiness card */}
       <section className="polish-card space-y-3">
-        <p className="text-sm text-gray-500">Readiness Score</p>
-        <p className="text-2xl font-bold text-gray-900">{Math.round(score)}%</p>
-        <p className="text-sm text-gray-600">{readinessLabel(score)}</p>
+        <div className="flex items-center gap-2">
+          <span
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ background: readinessDotColor(score) }}
+            aria-hidden
+          />
+          <p className="text-sm text-white/40">Readiness Score</p>
+        </div>
+        <p className="text-5xl font-bold text-white tracking-tight">{Math.round(score)}%</p>
+        <p className="text-sm text-white/60">{readinessLabel(score)}</p>
       </section>
 
       {/* Today's session card */}
       <section className="polish-card space-y-3">
-        <p className="text-sm text-gray-500">Today&apos;s Session</p>
-        <p className="text-lg font-semibold text-gray-900">{session.sessionTitle}</p>
-        <div className="space-y-1 text-sm text-gray-600">
-          <p><span className="text-gray-500">Focus:</span> {trainingFocus}</p>
-          <p><span className="text-gray-500">Duration:</span> {session.duration}</p>
+        <p className="text-sm text-white/40">Today&apos;s Session</p>
+        <p className="text-lg font-semibold text-white">{session.sessionTitle}</p>
+        <div className="space-y-1 text-sm text-white/60">
+          <p><span className="text-white/40">Focus:</span> {trainingFocus}</p>
+          <p><span className="text-white/40">Duration:</span> {session.duration}</p>
         </div>
       </section>
 
@@ -101,13 +114,14 @@ export default function AthleteHomeDashboard() {
       <div className="flex flex-col space-y-3 pt-2">
         <Link
           href="/programme"
-          className="h-12 w-full flex items-center justify-center rounded-xl font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors active:scale-[0.98]"
+          className="w-full flex items-center justify-center rounded-[14px] font-bold tracking-wide h-[52px] text-white transition-opacity active:scale-[0.98] hover:opacity-90"
+          style={{ background: "linear-gradient(135deg, #0A84FF, #7B61FF)", letterSpacing: "0.02em" }}
         >
           Start Workout
         </Link>
-        <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
-          <Link href="/coach" className="underline hover:text-gray-700">Coach</Link>
-          <Link href="/tactical/input" className="underline hover:text-gray-700">Log readiness</Link>
+        <div className="flex items-center justify-center gap-4 text-xs text-white/40">
+          <Link href="/coach" className="no-underline tracking-[0.06em] uppercase hover:text-white/60">Coach</Link>
+          <Link href="/tactical/input" className="no-underline tracking-[0.06em] uppercase hover:text-white/60">Log readiness</Link>
         </div>
       </div>
     </div>

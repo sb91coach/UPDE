@@ -61,21 +61,23 @@ export default function WeekSelector({
               onClick={() => onWeekChange(weekNum)}
               style={{
                 flexShrink: 0,
-                padding: "10px 18px",
-                minHeight: 44,
-                minWidth: 80,
+                minWidth: 72,
+                height: 36,
+                padding: "0 14px",
                 whiteSpace: "nowrap",
-                fontSize: 14,
-                fontWeight: isActive ? 600 : 500,
-                color: isActive ? "#00C9A0" : "rgba(255,255,255,0.85)",
-                background: isActive ? "rgba(0,201,160,0.2)" : "rgba(255,255,255,0.06)",
-                border: isActive ? "1px solid #00C9A0" : "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 10,
+                fontSize: 12,
+                fontWeight: isActive ? 700 : 600,
+                letterSpacing: "0.02em",
+                border: isActive ? "1px solid rgba(0,201,160,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                background: isActive ? "rgba(0,201,160,0.1)" : "rgba(255,255,255,0.03)",
+                color: isActive ? "#00C9A0" : "rgba(238,240,244,0.4)",
                 cursor: "pointer",
-                transition: "background 0.2s ease, border-color 0.2s ease",
+                transition: "all 0.15s",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
+                borderRadius: 8,
+                fontFamily: "inherit",
               }}
             >
               Week {weekNum}

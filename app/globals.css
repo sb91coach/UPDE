@@ -94,13 +94,13 @@ body {
   }
 }
 
-/* Mobile polish: centered content, soft background, consistent spacing */
+/* Mobile polish: centered content, inherits dark OS background */
 .mobile-polish {
   max-width: 28rem;
   margin-left: auto;
   margin-right: auto;
   padding: 1rem 1rem 1.5rem;
-  background: #f9fafb;
+  background: transparent;
 }
 @media (min-width: 768px) {
   .mobile-polish {
@@ -109,17 +109,24 @@ body {
   }
 }
 
-/* Polished card: clean white block */
+/* Polished card: dark iOS-style glass card */
 .polish-card {
-  border-radius: 1rem;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f3f4f6;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
   padding: 1rem 1.25rem;
 }
 @media (min-width: 768px) {
   .polish-card {
     padding: 1.25rem 1.5rem;
+  }
+}
+
+/* OSLayer / profile area: dark page background (match top bar on mobile) */
+@media (max-width: 768px) {
+  .osLayerRoot {
+    background: #0a0c12;
   }
 }
 
@@ -149,4 +156,63 @@ body {
   cursor: pointer;
   border: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Soft paywall modal animation */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Mobile typography and card polish (max-width: 768px) */
+@media (max-width: 768px) {
+  .container h1,
+  .container h2 {
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+  }
+  .container p,
+  .container li {
+    font-size: 14px;
+    line-height: 1.65;
+    color: rgba(238, 240, 244, 0.55);
+  }
+  .container [class*="card"],
+  .container [class*="Card"],
+  .container .performanceAdjustmentsSignal,
+  .container .briefWrap > div {
+    border-radius: 12px;
+  }
+  .container .week-section + * {
+    margin-bottom: 24px;
+  }
+}
+
+/* Info card style (phase intent, system bias, etc.) */
+.info-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 20px 18px;
+  margin-bottom: 12px;
+}
+.info-card-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(238, 240, 244, 0.25);
+  margin-bottom: 5px;
+}
+.info-card-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(238, 240, 244, 0.85);
+  line-height: 1.4;
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import MobileTabBar from "@/app/components/MobileTabBar";
+import { SoftPaywall } from "@/app/components/SoftPaywall";
 
 const orbStyle: React.CSSProperties = {
   position: "fixed",
@@ -70,10 +71,13 @@ const closeBtnStyle: React.CSSProperties = {
 export default function OSLayer({
   children,
   hideBottomNav,
+  isPro = true,
 }: {
   children: React.ReactNode;
   /** When true, hide mobile bottom nav (e.g. during workout mode). */
   hideBottomNav?: boolean;
+  /** When false, AI Coach orb is gated behind soft paywall */
+  isPro?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -114,6 +118,9 @@ export default function OSLayer({
           border-bottom: 1px solid rgba(255,255,255,0.05);
           backdrop-filter: blur(12px);
         }
+        .osLayerRoot .osLayerBarLogoDot {
+          display: none;
+        }
         .osLayerRoot .osLayerBarNav {
           display: flex;
           gap: 32px;
@@ -126,18 +133,38 @@ export default function OSLayer({
         }
         @media (max-width: 768px) {
           .osLayerRoot .osLayerBar {
-            padding: 0 16px;
-            flex-wrap: nowrap;
-            min-height: 54px;
-            height: calc(54px + env(safe-area-inset-top));
+            padding: 0 20px;
             padding-top: env(safe-area-inset-top);
+            padding-bottom: 12px;
+            flex-wrap: nowrap;
+            min-height: 52px;
+            height: calc(52px + env(safe-area-inset-top));
+            align-items: flex-end;
+            background: rgba(10, 12, 18, 0.97);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
           }
           .osLayerRoot .osLayerBarTitle {
             font-size: 11px;
-            letter-spacing: 0.08em;
-            opacity: 0.8;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(238, 240, 244, 0.9);
             flex: 1;
             margin: 0;
+            display: flex;
+            align-items: center;
+          }
+          .osLayerRoot .osLayerBarLogoDot {
+            display: block;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #00c9a0;
+            box-shadow: 0 0 8px rgba(0, 201, 160, 0.6);
+            margin-right: 8px;
+            flex-shrink: 0;
           }
           .osLayerRoot .desktop-nav-tabs {
             display: none !important;
@@ -159,9 +186,10 @@ export default function OSLayer({
           }
         }
       `}</style>
-      {/* Top OS Bar — on mobile: logo + app name (left) + avatar/menu (right); no nav tabs */}
+      {/* Top OS Bar — on mobile: teal dot + logo (left) + avatar (right); no nav tabs */}
       <div className="osLayerBar">
         <div className="osLayerBarTitle" style={{ fontSize: 13, letterSpacing: "0.12em", opacity: 0.6 }}>
+          <span className="osLayerBarLogoDot" aria-hidden />
           PERFORMANCE PATHFINDER OS
         </div>
         <div className="osLayerBarNav desktop-nav-tabs">
@@ -248,15 +276,17 @@ export default function OSLayer({
           </div>
         )}
 
-        <button
-          type="button"
-          className="osLayerFloatingOrb"
-          style={orbStyle}
-          onClick={toggle}
-          aria-label={open ? "Close AI Coach" : "Open AI Coach"}
-        >
-          {open ? "×" : "✦"}
-        </button>
+        <SoftPaywall isPro={isPro} feature="AI Coaching">
+          <button
+            type="button"
+            className="osLayerFloatingOrb"
+            style={orbStyle}
+            onClick={() => isPro && toggle()}
+            aria-label={open ? "Close AI Coach" : "Open AI Coach"}
+          >
+            {open ? "×" : "✦"}
+          </button>
+        </SoftPaywall>
       </div>
     </div>
   );

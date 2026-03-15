@@ -5,6 +5,7 @@ import SessionBlock, { type SessionBlockData, getTotalSetsFromBlocks } from "./S
 import SessionProgress from "./SessionProgress";
 import SessionOverview from "./SessionOverview";
 import SessionSummary from "./SessionSummary";
+import { SoftPaywall } from "@/app/components/SoftPaywall";
 
 /**
  * Day type for colour coding: Red = high load, Green = moderate, Recovery = light/off.
@@ -31,6 +32,8 @@ export type DayAccordionProps = {
   showRpe?: boolean;
   /** When provided, shows a full-width "Begin Session" CTA at bottom of expanded state (mobile-friendly) */
   onBeginSession?: (dayId: string) => void;
+  /** When false, Begin Session is gated behind soft paywall */
+  isPro?: boolean;
 };
 
 const DAY_INDICATOR: Record<DayType, { char: string; color: string }> = {
@@ -49,6 +52,7 @@ export default function DayAccordion({
   unit = "kg",
   showRpe = false,
   onBeginSession,
+  isPro = true,
 }: DayAccordionProps) {
   const indicator = DAY_INDICATOR[day.type] ?? DAY_INDICATOR.Recovery;
   const sessionDate = propsSessionDate ?? (typeof window !== "undefined" ? new Date().toISOString().slice(0, 10) : "");
@@ -167,64 +171,112 @@ export default function DayAccordion({
             borderTop: "1px solid rgba(255,255,255,0.06)",
           }}
         >
-          {totalSets > 0 && (
-            <SessionProgress
-              totalSets={totalSets}
-              completedSets={completedSets}
-              label="Session Progress"
-            />
-          )}
-
-          <SessionOverview
-            focus={day.title}
-            duration={day.duration > 0 ? day.duration : undefined}
-            objective={day.performanceNotes ?? "High force output, low fatigue"}
-          />
-
-          {day.blocks.map((block, i) => (
-            <SessionBlock
-              key={i}
-              block={block}
-              index={i}
-              sessionDate={sessionDate}
-              unit={unit}
-              showRpe={showRpe}
-              onSetCompletionChange={handleSetCompletionChange}
-            />
-          ))}
-
-          {allComplete && (
-            <SessionSummary
-              totalSetsCompleted={completedSets}
-              completionTime={completionTime ?? undefined}
-            />
+          {!isPro ? (
+            <>
+              <div
+                style={{
+                  filter: "blur(3px)",
+                  userSelect: "none",
+                  pointerEvents: "none",
+                }}
+              >
+                {totalSets > 0 && (
+                  <SessionProgress
+                    totalSets={totalSets}
+                    completedSets={completedSets}
+                    label="Session Progress"
+                  />
+                )}
+                <SessionOverview
+                  focus={day.title}
+                  duration={day.duration > 0 ? day.duration : undefined}
+                  objective={day.performanceNotes ?? "High force output, low fatigue"}
+                />
+                {day.blocks.map((block, i) => (
+                  <SessionBlock
+                    key={i}
+                    block={block}
+                    index={i}
+                    sessionDate={sessionDate}
+                    unit={unit}
+                    showRpe={showRpe}
+                    onSetCompletionChange={handleSetCompletionChange}
+                  />
+                ))}
+                {allComplete && (
+                  <SessionSummary
+                    totalSetsCompleted={completedSets}
+                    completionTime={completionTime ?? undefined}
+                  />
+                )}
+              </div>
+              <div style={{ textAlign: "center", padding: "12px 0" }}>
+                <span style={{ fontSize: 12, color: "rgba(238,240,244,0.4)" }}>
+                  🔒 Upgrade to see full session detail
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              {totalSets > 0 && (
+                <SessionProgress
+                  totalSets={totalSets}
+                  completedSets={completedSets}
+                  label="Session Progress"
+                />
+              )}
+              <SessionOverview
+                focus={day.title}
+                duration={day.duration > 0 ? day.duration : undefined}
+                objective={day.performanceNotes ?? "High force output, low fatigue"}
+              />
+              {day.blocks.map((block, i) => (
+                <SessionBlock
+                  key={i}
+                  block={block}
+                  index={i}
+                  sessionDate={sessionDate}
+                  unit={unit}
+                  showRpe={showRpe}
+                  onSetCompletionChange={handleSetCompletionChange}
+                />
+              ))}
+              {allComplete && (
+                <SessionSummary
+                  totalSetsCompleted={completedSets}
+                  completionTime={completionTime ?? undefined}
+                />
+              )}
+            </>
           )}
 
           {onBeginSession && (
-            <button
-              type="button"
-              onClick={() => onBeginSession(dayId)}
-              className="dayAccordionBeginBtn"
-              style={{
-                width: "100%",
-                height: 48,
-                marginTop: 16,
-                padding: "0 16px",
-                background: "rgba(0,201,160,0.25)",
-                border: "1px solid #00C9A0",
-                borderRadius: 12,
-                color: "#00C9A0",
-                fontSize: 15,
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-              }}
-            >
-              Begin Session →
-            </button>
+            <SoftPaywall isPro={isPro} feature="Programme Engine">
+              <button
+                type="button"
+                onClick={() => isPro && onBeginSession(dayId)}
+                className="dayAccordionBeginBtn"
+                style={{
+                  width: "100%",
+                  height: 48,
+                  marginTop: 16,
+                  padding: "0 16px",
+                  background: "rgba(0,201,160,0.25)",
+                  border: "1px solid #00C9A0",
+                  borderRadius: 12,
+                  color: "#00C9A0",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+              >
+                Begin Session →
+              </button>
+            </SoftPaywall>
           )}
         </div>
       </div>

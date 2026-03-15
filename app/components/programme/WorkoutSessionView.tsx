@@ -5,6 +5,7 @@ import WorkoutExerciseCard from "./WorkoutExerciseCard";
 import SessionHeader from "./SessionHeader";
 import type { ExerciseData } from "./ExerciseCard";
 import RestTimer from "./RestTimer";
+import { SoftPaywall } from "@/app/components/SoftPaywall";
 
 export type WorkoutSessionViewProps = {
   exercises: ExerciseData[];
@@ -21,6 +22,8 @@ export type WorkoutSessionViewProps = {
   onWorkoutModeChange?: (active: boolean) => void;
   /** Optional: when user taps video demo on an exercise card. */
   onPlayDemo?: (exerciseName: string, demoUrl?: string) => void;
+  /** When false, Start Workout is gated behind soft paywall */
+  isPro?: boolean;
 };
 
 const defaultRest = "2:00";
@@ -36,6 +39,7 @@ export default function WorkoutSessionView({
   onFinishWorkout,
   onWorkoutModeChange,
   onPlayDemo,
+  isPro = true,
 }: WorkoutSessionViewProps) {
   const [workoutMode, setWorkoutMode] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -62,13 +66,15 @@ export default function WorkoutSessionView({
     <div className="mobile-polish workoutSessionView pb-32 md:pb-8 flex flex-col space-y-6">
       {!workoutMode ? (
         <>
-          <SessionHeader
-            title={sessionTitle ?? "Session"}
-            duration={sessionDuration}
-            focus={sessionFocus}
-            onStartWorkout={() => setWorkoutModeState(true)}
-            startWorkoutLabel="Start Workout"
-          />
+          <SoftPaywall isPro={isPro} feature="Programme Engine">
+            <SessionHeader
+              title={sessionTitle ?? "Session"}
+              duration={sessionDuration}
+              focus={sessionFocus}
+              onStartWorkout={isPro ? () => setWorkoutModeState(true) : undefined}
+              startWorkoutLabel="Start Workout"
+            />
+          </SoftPaywall>
           <div className="flex flex-col space-y-4">
             {exercises.map((ex, i) => (
               <WorkoutExerciseCard

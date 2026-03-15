@@ -42,45 +42,48 @@ export default function UpgradePage() {
   return (
     <OSLayer>
       <div
+        className="upgrade-page-wrap"
         style={{
-          maxWidth: 480,
+          maxWidth: 440,
           margin: "0 auto",
-          padding: "24px 16px",
-          paddingBottom: "calc(80px + env(safe-area-inset-bottom))",
+          padding: "32px 20px",
+          paddingBottom: "calc(100px + env(safe-area-inset-bottom))",
         }}
       >
-        <div
-          style={{
-            fontFamily: "DM Mono, monospace",
-            fontSize: 10,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "#00C9A0",
-            marginBottom: 8,
-          }}
-        >
-          Upgrade
-        </div>
-        <h1
-          style={{
-            fontSize: 24,
-            fontWeight: 800,
-            letterSpacing: "-0.4px",
-            marginBottom: 8,
-          }}
-        >
-          Unlock full access
-        </h1>
-        <p
-          style={{
-            fontSize: 14,
-            color: "rgba(238,240,244,0.5)",
-            lineHeight: 1.6,
-            marginBottom: 32,
-          }}
-        >
-          Get your periodised programme, AI coaching, tactical modules, and adaptive check-ins.
-        </p>
+        <header style={{ textAlign: "center", marginBottom: 36 }}>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "#00C9A0",
+              marginBottom: 10,
+            }}
+          >
+            Upgrade
+          </div>
+          <h1
+            style={{
+              fontSize: 26,
+              fontWeight: 800,
+              letterSpacing: "-0.6px",
+              marginBottom: 10,
+              color: "#EEF0F4",
+            }}
+          >
+            Unlock full access
+          </h1>
+          <p
+            style={{
+              fontSize: 14,
+              color: "rgba(238,240,244,0.45)",
+              lineHeight: 1.6,
+            }}
+          >
+            Get your periodised programme, AI coaching, tactical modules, and adaptive check-ins.
+          </p>
+        </header>
 
         {error && (
           <div
@@ -98,27 +101,28 @@ export default function UpgradePage() {
           </div>
         )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 24 }}>
           <div
             style={{
               background: "rgba(0,201,160,0.06)",
               border: "1px solid rgba(0,201,160,0.25)",
-              borderRadius: 10,
-              padding: "18px 20px",
+              borderRadius: 14,
+              padding: "22px 20px",
+              marginBottom: 14,
               display: "flex",
               flexDirection: "column",
-              gap: 12,
+              gap: 16,
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700 }}>Pro</div>
-                <div style={{ fontSize: 12, color: "rgba(238,240,244,0.45)", marginTop: 2 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#EEF0F4" }}>Pro</div>
+                <div style={{ fontSize: 13, color: "rgba(238,240,244,0.6)", marginTop: 4 }}>
                   Full programme · AI coaching · All features
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: "#00C9A0" }}>£29</div>
+                <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1px", color: "#00C9A0" }}>£29</div>
                 <div style={{ fontSize: 10, color: "rgba(238,240,244,0.35)" }}>/month</div>
               </div>
             </div>
@@ -128,13 +132,13 @@ export default function UpgradePage() {
               disabled={!!loading}
               style={{
                 width: "100%",
-                padding: 14,
+                height: 52,
                 background: "#00C9A0",
                 color: "#08090C",
                 border: "none",
-                borderRadius: 8,
-                fontSize: 14,
-                fontWeight: 700,
+                borderRadius: 12,
+                fontSize: 15,
+                fontWeight: 800,
                 cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading ? 0.7 : 1,
               }}
@@ -147,22 +151,23 @@ export default function UpgradePage() {
             style={{
               background: "rgba(61,126,255,0.06)",
               border: "1px solid rgba(61,126,255,0.2)",
-              borderRadius: 10,
-              padding: "18px 20px",
+              borderRadius: 14,
+              padding: "22px 20px",
+              marginBottom: 14,
               display: "flex",
               flexDirection: "column",
-              gap: 12,
+              gap: 16,
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700 }}>Elite + Coaching</div>
-                <div style={{ fontSize: 12, color: "rgba(238,240,244,0.45)", marginTop: 2 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#EEF0F4" }}>Elite + Coaching</div>
+                <div style={{ fontSize: 13, color: "rgba(238,240,244,0.6)", marginTop: 4 }}>
                   Pro + 1:1 coaching · Priority support
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: "#3D7EFF" }}>£79</div>
+                <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1px", color: "#3D7EFF" }}>£79</div>
                 <div style={{ fontSize: 10, color: "rgba(238,240,244,0.35)" }}>/month</div>
               </div>
             </div>
@@ -172,13 +177,13 @@ export default function UpgradePage() {
               disabled={!!loading}
               style={{
                 width: "100%",
-                padding: 14,
-                background: "rgba(61,126,255,0.25)",
+                height: 52,
+                background: "rgba(61,126,255,0.2)",
                 color: "#93c5fd",
                 border: "1px solid rgba(61,126,255,0.5)",
-                borderRadius: 8,
-                fontSize: 14,
-                fontWeight: 700,
+                borderRadius: 12,
+                fontSize: 15,
+                fontWeight: 800,
                 cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading ? 0.7 : 1,
               }}
