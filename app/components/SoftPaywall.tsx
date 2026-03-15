@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 interface SoftPaywallProps {
   children: React.ReactNode;
   isPro: boolean;
@@ -187,73 +185,6 @@ function UpgradeModal({
   );
 }
 
-export function SoftPaywall({ children, isPro, feature }: SoftPaywallProps) {
-  const [showModal, setShowModal] = useState(false);
-
-  if (isPro) return <>{children}</>;
-
-  return (
-    <>
-      <div
-        onClick={() => setShowModal(true)}
-        style={{ cursor: "pointer", position: "relative" }}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setShowModal(true);
-          }
-        }}
-      >
-        <div
-          style={{
-            opacity: 0.45,
-            pointerEvents: "none",
-            userSelect: "none",
-          }}
-        >
-          {children}
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              background: "rgba(10,12,18,0.9)",
-              border: "1px solid rgba(0,201,160,0.3)",
-              borderRadius: 20,
-              padding: "6px 14px",
-            }}
-          >
-            <span style={{ fontSize: 12 }}>🔒</span>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: "#00C9A0",
-              }}
-            >
-              Pro
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {showModal && (
-        <UpgradeModal feature={feature} onClose={() => setShowModal(false)} />
-      )}
-    </>
-  );
+export function SoftPaywall({ children }: SoftPaywallProps) {
+  return <>{children}</>;
 }

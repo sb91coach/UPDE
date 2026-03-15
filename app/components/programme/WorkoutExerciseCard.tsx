@@ -52,22 +52,35 @@ export default function WorkoutExerciseCard({
 
   return (
     <div className="polish-card overflow-hidden rounded-xl">
-      <button
-        type="button"
-        onClick={() => setExpanded((e) => !e)}
-        className="w-full text-left flex items-center justify-between gap-3 p-4 active:opacity-90"
-        aria-expanded={expanded}
-      >
-        <div className="min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 truncate">{name}</h3>
-          {prescription && (
-            <p className="text-sm text-gray-600 truncate mt-0.5">{prescription}</p>
-          )}
-        </div>
-        <span className="flex-shrink-0 text-gray-400 text-lg" aria-hidden>
-          {expanded ? "▼" : "▶"}
-        </span>
-      </button>
+      <div className="w-full flex items-center justify-between gap-3 p-4">
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          className="flex-1 min-w-0 text-left flex items-center justify-between gap-3 active:opacity-90"
+          aria-expanded={expanded}
+        >
+          <div className="min-w-0">
+            <h3 className="text-lg font-semibold text-gray-900 truncate">{name}</h3>
+            {prescription && (
+              <p className="text-sm text-gray-600 truncate mt-0.5">{prescription}</p>
+            )}
+          </div>
+          <span className="flex-shrink-0 text-gray-400 text-lg" aria-hidden>
+            {expanded ? "▼" : "▶"}
+          </span>
+        </button>
+        <a
+          href={`https://www.youtube.com/results?search_query=${encodeURIComponent(name + " technique 30 seconds")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-shrink-0 flex items-center text-gray-400 hover:text-gray-600"
+          style={{ fontSize: 14 }}
+          aria-label={`YouTube: ${name} technique`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          ▶
+        </a>
+      </div>
 
       {expanded && (
         <div className="px-4 pb-4 pt-0 border-t border-gray-100 space-y-3">

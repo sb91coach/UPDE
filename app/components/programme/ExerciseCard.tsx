@@ -85,17 +85,36 @@ export default function ExerciseCard({
         }}
       >
         <div
-          className="exerciseCardName"
           style={{
-            fontSize: "clamp(14px, 4vw, 16px)",
-            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
             marginBottom: 4,
-            opacity: 0.98,
-            letterSpacing: "-0.01em",
-            lineHeight: 1.3,
           }}
         >
-          {name}
+          <div
+            className="exerciseCardName"
+            style={{
+              fontSize: "clamp(14px, 4vw, 16px)",
+              fontWeight: 700,
+              opacity: 0.98,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.3,
+              minWidth: 0,
+            }}
+          >
+            {name}
+          </div>
+          <a
+            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(name + " technique 30 seconds")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "flex", alignItems: "center", flexShrink: 0, color: "rgba(238,240,244,0.3)", fontSize: 14 }}
+            aria-label={`YouTube: ${name} technique`}
+          >
+            ▶
+          </a>
         </div>
 
         {detailParts.length > 0 && (

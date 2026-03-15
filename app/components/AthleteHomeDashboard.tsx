@@ -134,31 +134,61 @@ function getExercisesForSession(sessionTitle: string): { name: string; sets: str
   ];
 }
 
-function ReadinessRing({ score, color }: { score: number; color: string }) {
-  const r = 42;
+function getPhase(currentWeek: number): string {
+  const w = currentWeek % 6 || 6;
+  if (w <= 2) return "Accumulation";
+  if (w <= 4) return "Intensification";
+  if (w === 5) return "Overreach";
+  return "Deload";
+}
+
+function ReadinessRing({ score }: { score: number }) {
+  const size = 160;
+  const r = 64;
   const circumference = 2 * Math.PI * r;
   const fill = (score / 100) * circumference;
+  const cx = size / 2;
+  const cy = size / 2;
   return (
-    <div style={{ position: "relative", width: 100, height: 100 }}>
-      <svg width={100} height={100} viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
+    <div style={{ position: "relative", width: size, height: size }}>
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        style={{ transform: "rotate(-90deg)" }}
+      >
+        <defs>
+          <linearGradient id="readinessGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#0A84FF" />
+            <stop offset="100%" stopColor="#00c9a0" />
+          </linearGradient>
+          <filter id="readinessGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
         <circle
-          cx={50}
-          cy={50}
+          cx={cx}
+          cy={cy}
           r={r}
           fill="none"
           stroke="rgba(255,255,255,0.06)"
-          strokeWidth={8}
+          strokeWidth={10}
         />
         <circle
-          cx={50}
-          cy={50}
+          cx={cx}
+          cy={cy}
           r={r}
           fill="none"
-          stroke={color}
-          strokeWidth={8}
+          stroke="url(#readinessGradient)"
+          strokeWidth={10}
           strokeDasharray={circumference}
           strokeDashoffset={circumference - fill}
           strokeLinecap="round"
+          filter="url(#readinessGlow)"
           style={{ transition: "stroke-dashoffset 0.4s ease" }}
         />
       </svg>
@@ -172,11 +202,14 @@ function ReadinessRing({ score, color }: { score: number; color: string }) {
           justifyContent: "center",
         }}
       >
-        <span style={{ fontSize: 24, fontWeight: 800, color: "rgba(238,240,244,0.95)" }}>
+        <span style={{ fontSize: 42, fontWeight: 700, color: "rgba(238,240,244,0.95)" }}>
           {Math.round(score)}
         </span>
-        <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", color: "rgba(238,240,244,0.28)" }}>
-          READINESS
+        <span style={{ fontSize: 11, color: "rgba(238,240,244,0.55)", marginTop: 2 }}>
+          out of 100
+        </span>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "rgba(238,240,244,0.28)", marginTop: 2, textTransform: "uppercase" }}>
+          data-driven composite
         </span>
       </div>
     </div>
@@ -289,6 +322,9 @@ export default function AthleteHomeDashboard() {
         .athlete-dashboard-full-width {
           grid-column: 1 / -1;
         }
+        .perf-dashboard-cta:hover {
+          background: rgba(255,255,255,0.09) !important;
+        }
       `}</style>
 
       {/* Hero — full width */}
@@ -320,47 +356,43 @@ export default function AthleteHomeDashboard() {
       </section>
 
       {/* Readiness card */}
-      <section style={CARD_STYLE}>
+      <section
+        style={{
+          ...CARD_STYLE,
+          background: "radial-gradient(ellipse at 50% 30%, rgba(10,132,255,0.08) 0%, rgba(10,12,18,0) 70%), rgba(255,255,255,0.04)",
+        }}
+      >
         <div style={LABEL_STYLE}>Readiness Score</div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-          <ReadinessRing score={readiness} color={readinessColor(readiness)} />
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              padding: "4px 10px",
-              borderRadius: 999,
-              background: readinessColor(readiness) + "22",
-              color: readinessColor(readiness),
-            }}
-          >
-            {readinessTag(readiness)}
-          </span>
-        </div>
-        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-          {[
-            { label: "Sleep", value: sleepScore, fill: "#00c9a0" },
-            { label: "Aerobic", value: aerobicScore, fill: "#0A84FF" },
-            { label: "Fatigue", value: fatigueScore, fill: "#f59e0b" },
-          ].map(({ label, value, fill }) => (
-            <div key={label}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 11, color: "rgba(238,240,244,0.55)" }}>
-                <span>{label}</span>
-                <span>{Math.round(value)}</span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+          <ReadinessRing score={readiness} />
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
+            {[
+              { label: "Recovery", value: sleepScore },
+              { label: "Load", value: fatigueScore },
+              { label: "Sentiment", value: Math.round(readiness) },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  borderRadius: 20,
+                  padding: "4px 10px",
+                  fontSize: 12,
+                  color: "rgba(238,240,244,0.95)",
+                }}
+              >
+                {label} {Math.round(value)}
               </div>
-              <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-                <div
-                  style={{
-                    height: "100%",
-                    width: `${Math.min(100, Math.max(0, value))}%`,
-                    background: fill,
-                    borderRadius: 3,
-                  }}
-                />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: 4 }}>
+            <p style={{ fontSize: 11, color: "rgba(238,240,244,0.55)", margin: "0 0 4px" }}>
+              Your programme
+            </p>
+            <p style={{ fontSize: 16, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: 0 }}>
+              {profile?.archetype ?? "Athlete"} · {getPhase(weekNum)}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -410,28 +442,60 @@ export default function AthleteHomeDashboard() {
               }}
             >
               <span>{ex.name}</span>
-              <span style={{ color: "rgba(238,240,244,0.55)", fontSize: 12 }}>{ex.sets} sets</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ color: "rgba(238,240,244,0.55)", fontSize: 12 }}>{ex.sets} sets</span>
+                <a
+                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(ex.name + " technique 30 seconds")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "flex", alignItems: "center", color: "rgba(238,240,244,0.3)", fontSize: 14 }}
+                  aria-label={`YouTube: ${ex.name} technique`}
+                >
+                  ▶
+                </a>
+              </div>
             </div>
           ))}
         </div>
-        <Link
-          href="/programme"
-          style={{
-            display: "block",
-            marginTop: 16,
-            height: 50,
-            borderRadius: 14,
-            background: "linear-gradient(135deg, #0A84FF, #7B61FF)",
-            color: "#fff",
-            fontWeight: 700,
-            fontSize: 14,
-            textAlign: "center",
-            lineHeight: "50px",
-            textDecoration: "none",
-          }}
-        >
-          Start Workout
-        </Link>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
+          <Link
+            href="/programme"
+            style={{
+              display: "block",
+              height: 50,
+              borderRadius: 14,
+              background: "linear-gradient(135deg, #0A84FF, #7B61FF)",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: 14,
+              textAlign: "center",
+              lineHeight: "50px",
+              textDecoration: "none",
+            }}
+          >
+            Start Workout
+          </Link>
+          <Link
+            href="/performance"
+            className="perf-dashboard-cta"
+            style={{
+              height: 50,
+              width: "100%",
+              borderRadius: 14,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "rgba(238,240,244,0.85)",
+              fontSize: 15,
+              fontWeight: 600,
+              textDecoration: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            Performance Dashboard
+          </Link>
+        </div>
       </section>
 
       {/* Weekly trend — full width */}

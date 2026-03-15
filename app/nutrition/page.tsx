@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { RequireAuth } from "@/lib/requireAuth";
 import OSLayer from "@/app/components/OSLayer";
@@ -16,35 +14,6 @@ import { getMacroLogs } from "@/lib/nutritionStore";
 import { getBodyComposition } from "@/lib/nutritionStore";
 import { PerformanceEngine } from "@/lib/performanceEngine";
 import { subscribe as subscribePerformance } from "@/lib/performanceEvents";
-
-function NavTab({
-  href,
-  label,
-  pathname,
-}: {
-  href: string;
-  label: string;
-  pathname: string;
-}) {
-  const active = pathname === href;
-  return (
-    <Link
-      href={href}
-      className={active ? "active" : undefined}
-      style={{
-        fontSize: 14,
-        opacity: active ? 1 : 0.6,
-        borderBottom: active ? "2px solid #2F80ED" : "2px solid transparent",
-        paddingBottom: 4,
-        cursor: "pointer",
-        textDecoration: "none",
-        color: "inherit",
-      }}
-    >
-      {label}
-    </Link>
-  );
-}
 
 function mockMacroSummaries(): MacroSummary[] {
   const last7 = { protein: 82, carbs: 280, fats: 58, calories: 1920 };
@@ -77,11 +46,11 @@ function buildChartDataFromLogs(logs: { date: string; protein: number; carbs: nu
 }
 
 export default function NutritionPage() {
-  const pathname = usePathname();
   const [showMacroModal, setShowMacroModal] = useState(false);
   const [showBodyCompModal, setShowBodyCompModal] = useState(false);
   const [macroLogs, setMacroLogs] = useState<ReturnType<typeof getMacroLogs>>([]);
   const [bodyComposition, setBodyComposition] = useState<ReturnType<typeof getBodyComposition>>(null);
+  const [strategicInsights, setStrategicInsights] = useState<string[]>([]);
 
   const refreshMacroLogs = useCallback(() => {
     setMacroLogs(getMacroLogs());
@@ -91,8 +60,6 @@ export default function NutritionPage() {
     setBodyComposition(getBodyComposition());
     PerformanceEngine.updateNutrition({ bodyComposition: getBodyComposition() });
   }, []);
-
-  const [strategicInsights, setStrategicInsights] = useState<string[]>([]);
 
   useEffect(() => {
     refreshMacroLogs();
@@ -128,216 +95,193 @@ export default function NutritionPage() {
   return (
     <RequireAuth>
       <OSLayer>
-        <div className="nutritionOuter">
-          <nav className="nutritionNav">
-            <div className="nutritionBrand">PERFORMANCE PATHFINDER OS</div>
-            <div className="nutritionTabs">
-              <NavTab href="/profile" label="Dashboard" pathname={pathname} />
-              <NavTab href="/programme" label="Programme" pathname={pathname} />
-              <NavTab href="/tactical" label="Tactical" pathname={pathname} />
-              <NavTab href="/tactical/input" label="Daily Input" pathname={pathname} />
-              <NavTab href="/tactical/radar" label="Radar" pathname={pathname} />
-              <NavTab href="/tactical/map" label="Readiness Map" pathname={pathname} />
-              <NavTab href="/tactical/command" label="Command Readiness" pathname={pathname} />
-              <NavTab href="/nutrition" label="Nutrition" pathname={pathname} />
-              <NavTab href="/strategy" label="Strategy" pathname={pathname} />
-              <NavTab href="/benchmarks" label="Benchmarks" pathname={pathname} />
-              <NavTab href="/settings" label="Settings" pathname={pathname} />
-            </div>
-          </nav>
-
-          <div className="nutritionContainer">
-            <div className="nutritionHeader">
-              <div className="nutritionPhase">NUTRITION</div>
-              <h1 className="nutritionHeadline">Fuel strategy</h1>
-              <p className="nutritionSub">
-                Adaptive fuelling from training demand, readiness, and recovery. No meal logging — targets and reasoning only.
-              </p>
-            </div>
-            {strategicInsights.length > 0 && (
-              <div className="nutritionInsightsBanner" style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(47, 128, 237, 0.08)", border: "1px solid rgba(47, 128, 237, 0.2)", borderRadius: 12, fontSize: 12 }}>
-                <strong style={{ letterSpacing: "0.04em" }}>Performance insights</strong>
-                <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
-                  {strategicInsights.map((s, i) => (
-                    <li key={i} style={{ marginTop: 2 }}>{s}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <div className="nutritionPlaceholder">
-              <p className="nutritionPlaceholderText">Weekly overview and daily strategies will appear here.</p>
-              <div className="nutritionPlaceholderButtons">
-                <button type="button" className="nutritionLogMacrosBtn nutritionBodyCompBtn" onClick={() => setShowBodyCompModal(true)} aria-label="Update body composition">
-                  <span className="nutritionLogMacrosOrb" aria-hidden />
-                  <span className="nutritionLogMacrosText">
-                    <span className="nutritionLogMacrosLabel">Update body composition</span>
-                    <span className="nutritionLogMacrosSub">Weight, body fat, muscle mass</span>
-                  </span>
-                </button>
-                <button type="button" className="nutritionLogMacrosBtn" onClick={() => setShowMacroModal(true)} aria-label="Log macros">
-                  <span className="nutritionLogMacrosOrb" aria-hidden />
-                  <span className="nutritionLogMacrosText">
-                    <span className="nutritionLogMacrosLabel">Log macros</span>
-                    <span className="nutritionLogMacrosSub">Add today&apos;s intake</span>
-                  </span>
-                </button>
-              </div>
-            </div>
-            <LogMacrosModal isOpen={showMacroModal} onClose={() => setShowMacroModal(false)} onSaved={refreshMacroLogs} />
-            <BodyCompositionModal isOpen={showBodyCompModal} onClose={() => setShowBodyCompModal(false)} onSaved={refreshBodyComposition} />
-            <div className="nutritionContent">
-              <NutritionMacroChart data={chartData} />
-              <MacroSummaryCards summaries={macroSummariesResolved} />
-              <FuelStrategyTool bodyComposition={bodyComposition} />
-            </div>
-          </div>
-
+        <div className="nutrition-page">
           <style jsx>{`
-            .nutritionOuter {
-              min-height: 100vh;
-              background:
-                radial-gradient(circle at 20% 10%, rgba(47,128,237,0.12), transparent 40%),
-                radial-gradient(circle at 80% 90%, rgba(39,224,166,0.08), transparent 40%),
-                linear-gradient(180deg, #0a0a0f 0%, #0f1117 50%, #0a0a0f 100%);
-              color: #fff;
-              position: relative;
-              overflow-x: hidden;
-            }
-            .nutritionOuter::before {
-              content: "";
-              position: absolute;
-              inset: 0;
-              background:
-                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-              background-size: 40px 40px;
-              opacity: 0.4;
-              pointer-events: none;
-            }
-            .nutritionNav {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              padding: 20px 40px;
-              border-bottom: 1px solid rgba(255,255,255,0.05);
-            }
-            .nutritionBrand {
-              font-size: 12px;
-              letter-spacing: 2px;
-              opacity: 0.6;
-            }
-            .nutritionTabs {
-              display: flex;
-              gap: 30px;
-            }
-            .nutritionContainer {
-              max-width: 1200px;
+            .nutrition-page {
+              max-width: 860px;
               margin: 0 auto;
-              padding: 40px;
+              padding: 0 16px 24px;
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
             }
-            .nutritionHeader {
-              margin-bottom: 32px;
+            .nutrition-card {
+              background: rgba(255,255,255,0.04);
+              border: 1px solid rgba(255,255,255,0.07);
+              border-radius: 20px;
+              padding: 20px;
             }
-            .nutritionPhase {
-              font-size: 11px;
+            .nutrition-section-label {
+              font-size: 10px;
+              font-weight: 700;
               letter-spacing: 0.12em;
-              opacity: 0.6;
-              margin-bottom: 8px;
+              text-transform: uppercase;
+              color: rgba(238,240,244,0.25);
+              margin-bottom: 12px;
             }
-            .nutritionHeadline {
-              font-size: 28px;
-              font-weight: 600;
-              margin: 0 0 12px;
+            .nutrition-headline {
+              font-size: 22px;
+              font-weight: 700;
+              color: rgba(238,240,244,0.95);
+              margin: 0 0 6px;
             }
-            .nutritionSub {
-              font-size: 15px;
-              opacity: 0.8;
+            .nutrition-sub {
+              font-size: 14px;
+              color: rgba(238,240,244,0.55);
               margin: 0;
               line-height: 1.5;
             }
-            .nutritionPlaceholder {
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              gap: 24px;
-              padding: 24px 28px;
-              background: rgba(255,255,255,0.04);
-              border: 1px solid rgba(255,255,255,0.08);
-              border-radius: 16px;
-              font-size: 14px;
-              opacity: 0.8;
-              flex-wrap: wrap;
+            .nutrition-insights-banner {
+              padding: 14px 18px;
+              background: rgba(47,128,237,0.08);
+              border: 1px solid rgba(47,128,237,0.2);
+              border-radius: 12px;
+              font-size: 12px;
+              color: rgba(238,240,244,0.85);
             }
-            .nutritionPlaceholderText {
-              margin: 0;
-              flex: 1;
-              min-width: 0;
+            .nutrition-insights-banner strong {
+              letter-spacing: 0.04em;
+              color: rgba(238,240,244,0.95);
             }
-            .nutritionPlaceholderButtons {
+            .nutrition-insights-banner ul {
+              margin: 8px 0 0;
+              padding-left: 18px;
+              color: rgba(238,240,244,0.55);
+            }
+            .nutrition-placeholder {
               display: flex;
-              align-items: center;
+              flex-direction: column;
               gap: 12px;
-              flex-shrink: 0;
-              flex-wrap: wrap;
             }
-            .nutritionLogMacrosBtn {
+            .nutrition-placeholder-text {
+              margin: 0;
+              font-size: 14px;
+              color: rgba(238,240,244,0.55);
+            }
+            .nutrition-placeholder-buttons {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+            }
+            .nutrition-cta-btn {
               display: inline-flex;
               align-items: center;
-              gap: 14px;
-              padding: 12px 22px 12px 14px;
-              border-radius: 9999px;
-              border: 1px solid rgba(255,255,255,0.25);
-              background: rgba(255,255,255,0.12);
-              backdrop-filter: blur(20px);
-              -webkit-backdrop-filter: blur(20px);
-              color: #fff;
+              gap: 12px;
+              padding: 14px 20px;
+              border-radius: 14px;
+              font-size: 15px;
+              font-weight: 600;
               cursor: pointer;
-              font: inherit;
-              box-shadow: 0 2px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.06) inset;
-              transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+              border: none;
+              font-family: inherit;
               text-align: left;
-              flex-shrink: 0;
+              text-decoration: none;
+              color: #fff;
+              background: linear-gradient(135deg, #0A84FF, #7B61FF);
+              transition: opacity 0.2s, transform 0.15s;
             }
-            .nutritionLogMacrosBtn:hover {
-              background: rgba(255,255,255,0.18);
-              box-shadow: 0 0 20px rgba(47,128,237,0.35), 0 0 36px rgba(39,224,166,0.2), 0 4px 32px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1) inset;
+            .nutrition-cta-btn:hover {
+              opacity: 0.95;
               transform: scale(1.01);
             }
-            .nutritionLogMacrosOrb {
-              width: 32px;
-              height: 32px;
-              border-radius: 50%;
-              background: radial-gradient(circle at 30% 30%, #27E0A6, #2F80ED 60%, rgba(17,24,39,0.9));
-              box-shadow: 0 0 16px rgba(47,128,237,0.6), 0 0 28px rgba(39,224,166,0.4), 0 2px 8px rgba(0,0,0,0.2) inset;
-              flex-shrink: 0;
+            .nutrition-cta-btn.secondary {
+              background: rgba(255,255,255,0.06);
+              border: 1px solid rgba(255,255,255,0.12);
+              color: rgba(238,240,244,0.95);
             }
-            .nutritionLogMacrosText {
-              display: flex;
-              flex-direction: column;
-              align-items: flex-start;
-              gap: 2px;
+            .nutrition-cta-btn.secondary:hover {
+              background: rgba(255,255,255,0.09);
             }
-            .nutritionLogMacrosLabel {
-              font-weight: 600;
-              font-size: 15px;
-              letter-spacing: -0.02em;
+            .nutrition-cta-btn span:first-child {
+              font-size: 18px;
             }
-            .nutritionLogMacrosSub {
+            .nutrition-cta-label {
+              display: block;
+              margin-bottom: 2px;
+            }
+            .nutrition-cta-sub {
               font-size: 12px;
               opacity: 0.85;
+              font-weight: 500;
             }
-            .nutritionContent {
+            .nutrition-content {
               display: flex;
               flex-direction: column;
-              gap: 20px;
-              margin-top: 20px;
+              gap: 12px;
             }
-            @media (max-width: 768px) {
-              .nutritionNav { padding: 16px; flex-wrap: wrap; gap: 12px; }
-              .nutritionTabs { gap: 16px; flex-wrap: wrap; }
-              .nutritionContainer { padding: 16px; }
+            .nutrition-scroll-wrap {
+              overflow-x: auto;
+              -webkit-overflow-scrolling: touch;
+              margin: 0 -20px;
+              padding: 0 20px;
             }
           `}</style>
+
+          <div className="nutrition-card">
+            <div className="nutrition-section-label">Nutrition</div>
+            <h1 className="nutrition-headline">Fuel strategy</h1>
+            <p className="nutrition-sub">
+              Adaptive fuelling from training demand, readiness, and recovery. No meal logging — targets and reasoning only.
+            </p>
+          </div>
+
+          {strategicInsights.length > 0 && (
+            <div className="nutrition-card nutrition-insights-banner">
+              <strong>Performance insights</strong>
+              <ul>
+                {strategicInsights.map((s, i) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="nutrition-card">
+            <div className="nutrition-placeholder">
+              <p className="nutrition-placeholder-text">Weekly overview and daily strategies will appear here.</p>
+              <div className="nutrition-placeholder-buttons">
+                <button
+                  type="button"
+                  className="nutrition-cta-btn secondary"
+                  onClick={() => setShowBodyCompModal(true)}
+                  aria-label="Update body composition"
+                >
+                  <span aria-hidden>◇</span>
+                  <span>
+                    <span className="nutrition-cta-label">Update body composition</span>
+                    <span className="nutrition-cta-sub">Weight, body fat, muscle mass</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="nutrition-cta-btn"
+                  onClick={() => setShowMacroModal(true)}
+                  aria-label="Log macros"
+                >
+                  <span aria-hidden>+</span>
+                  <span>
+                    <span className="nutrition-cta-label">Log macros</span>
+                    <span className="nutrition-cta-sub">Add today&apos;s intake</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <LogMacrosModal isOpen={showMacroModal} onClose={() => setShowMacroModal(false)} onSaved={refreshMacroLogs} />
+          <BodyCompositionModal isOpen={showBodyCompModal} onClose={() => setShowBodyCompModal(false)} onSaved={refreshBodyComposition} />
+
+          <div className="nutrition-content">
+            <div className="nutrition-card nutrition-scroll-wrap">
+              <NutritionMacroChart data={chartData} />
+            </div>
+            <div className="nutrition-card nutrition-scroll-wrap">
+              <MacroSummaryCards summaries={macroSummariesResolved} />
+            </div>
+            <div className="nutrition-card">
+              <FuelStrategyTool bodyComposition={bodyComposition} />
+            </div>
+          </div>
         </div>
       </OSLayer>
     </RequireAuth>

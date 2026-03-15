@@ -19,10 +19,20 @@ import {
   type GoalRoadmapResult,
   type CurrentBenchmarks,
 } from "@/lib/goalEngine";
+import type { Phase } from "@/lib/goalEngine";
 import type { PerformanceBenchmarks } from "@/lib/profile/benchmarkSchema";
 import type { StrategyGoal, InjuryStatus } from "@/lib/strategyStore";
 import { PerformanceEngine } from "@/lib/performanceEngine";
 import { subscribe as subscribePerformance } from "@/lib/performanceEvents";
+
+function phasePillColor(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes("accumulation") || n.includes("foundation")) return "#0A84FF";
+  if (n.includes("intensification") || n.includes("build")) return "#7B61FF";
+  if (n.includes("overreach") || n.includes("peak")) return "#f59e0b";
+  if (n.includes("deload") || n.includes("taper") || n.includes("consolidate")) return "#00c9a0";
+  return "rgba(238,240,244,0.4)";
+}
 
 function profileToCurrentBenchmarks(pb: PerformanceBenchmarks | null | undefined): CurrentBenchmarks | null {
   if (!pb?.exerciseBenchmarks) return null;
@@ -194,13 +204,17 @@ export default function StrategyPage() {
     [selected, selectedId, milestoneModalMilestone]
   );
 
+  const getPhaseForWeek = useCallback((week: number, phases: Phase[]): Phase | undefined => {
+    return phases.find((p) => week >= p.startWeek && week <= p.endWeek);
+  }, []);
+
   return (
     <RequireAuth>
       <OSLayer>
-        <div className="strategyOuter">
-          <nav className="strategyNav">
-            <div className="strategyBrand">PERFORMANCE PATHFINDER OS</div>
-            <div className="strategyTabs">
+        <div className="strategy-page">
+          <nav className="strategy-nav">
+            <div className="strategy-brand">PERFORMANCE PATHFINDER OS</div>
+            <div className="strategy-tabs">
               <NavTab href="/profile" label="Dashboard" pathname={pathname} />
               <NavTab href="/programme" label="Programme" pathname={pathname} />
               <NavTab href="/tactical" label="Tactical" pathname={pathname} />
@@ -215,36 +229,34 @@ export default function StrategyPage() {
             </div>
           </nav>
 
-          <div className="strategyContainer">
-            <div className="strategyHeaderRow">
-              <div className="strategyHeader">
-                <div className="strategyPhase">STRATEGY</div>
-                <h1 className="strategyHeadline">Strategy Roadmap</h1>
-                <p className="strategySub">Turn intent into execution.</p>
-              </div>
+          <div className="strategy-container">
+            <div className="strategy-card strategy-header-card">
+              <div className="strategy-section-label">STRATEGY</div>
+              <h1 className="strategy-headline">Strategy Roadmap</h1>
+              <p className="strategy-sub">Turn intent into execution.</p>
             </div>
 
-            <div className="strategyGoalBar">
-              <div className="strategyGoalPills">
+            <div className="strategy-card strategy-goal-bar">
+              <div className="strategy-goal-pills">
                 {goals.map((g) => (
                   <button
                     key={g.id}
                     type="button"
-                    className={`strategyGoalPill ${g.id === selectedId ? "active" : ""}`}
+                    className={`strategy-goal-pill ${g.id === selectedId ? "active" : ""}`}
                     onClick={() => setSelectedId(g.id)}
                   >
                     {g.title}
                   </button>
                 ))}
               </div>
-              <div className="strategyGoalActions">
-                <a href="#strategy-goal-form" className="strategyGoalBtn strategyGoalBtnAdd">
+              <div className="strategy-goal-actions">
+                <a href="#strategy-goal-form" className="strategy-goal-btn strategy-goal-btn-add">
                   Add Goal
                 </a>
                 {selectedId && (
                   <button
                     type="button"
-                    className="strategyGoalBtn strategyGoalBtnRemove"
+                    className="strategy-goal-btn strategy-goal-btn-remove"
                     onClick={() => removeGoal(selectedId)}
                     aria-label="Remove goal"
                   >
@@ -256,15 +268,36 @@ export default function StrategyPage() {
 
             {selected && (
               <>
-                <div className="strategySection strategySectionExecution">
-                  <div className="strategyExecutionCard">
-                    <div className="strategyExecutionGlow" />
-                    <div className="strategyExecutionPercent">{execution?.score ?? executionLegacy?.percentage ?? 0}%</div>
-                    <div className="strategyExecutionConfidence">
+                {selected.roadmap.phases?.length > 0 && (
+                  <div className="strategy-card strategy-phase-pills-wrap">
+                    <div className="strategy-section-label">PHASES</div>
+                    <div className="strategy-phase-pills">
+                      {selected.roadmap.phases.map((p) => (
+                        <span
+                          key={p.id}
+                          className="strategy-phase-pill"
+                          style={{
+                            background: `${phasePillColor(p.name)}22`,
+                            borderColor: phasePillColor(p.name),
+                            color: phasePillColor(p.name),
+                          }}
+                        >
+                          {p.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="strategy-card strategy-execution-card">
+                  <div className="strategy-section-label">EXECUTION</div>
+                  <div className="strategy-execution-inner">
+                    <div className="strategy-execution-percent">{execution?.score ?? executionLegacy?.percentage ?? 0}%</div>
+                    <div className="strategy-execution-confidence">
                       {(execution?.confidenceBand ?? executionLegacy?.band ?? "medium").toUpperCase()} CONFIDENCE
                     </div>
                     {execution?.riskDrivers?.length ? (
-                      <ul className="strategyExecutionRiskDrivers">
+                      <ul className="strategy-execution-risk-drivers">
                         {execution.riskDrivers.slice(0, 3).map((r, i) => (
                           <li key={i}>{r}</li>
                         ))}
@@ -274,18 +307,22 @@ export default function StrategyPage() {
                 </div>
 
                 {selected.roadmap.kpis.length > 0 && (
-                  <div className="strategySection">
-                    <GoalProjectionChart
-                      totalWeeks={selected.roadmap.totalWeeks}
-                      phases={selected.roadmap.phases}
-                      milestones={selected.roadmap.milestones}
-                      primaryKpi={selected.roadmap.kpis[0]}
-                      milestoneProgress={selected.milestoneProgress}
-                    />
+                  <div className="strategy-card strategy-chart-wrap">
+                    <div className="strategy-section-label">PROJECTION</div>
+                    <div className="strategy-chart-scroll">
+                      <GoalProjectionChart
+                        totalWeeks={selected.roadmap.totalWeeks}
+                        phases={selected.roadmap.phases}
+                        milestones={selected.roadmap.milestones}
+                        primaryKpi={selected.roadmap.kpis[0]}
+                        milestoneProgress={selected.milestoneProgress}
+                      />
+                    </div>
                   </div>
                 )}
 
-                <div className="strategySection">
+                <div className="strategy-card">
+                  <div className="strategy-section-label">ROADMAP</div>
                   <RoadmapTimeline
                     phases={selected.roadmap.phases}
                     milestones={selected.roadmap.milestones}
@@ -295,21 +332,65 @@ export default function StrategyPage() {
                   />
                 </div>
 
-                <div className="strategySection">
+                <div className="strategy-card strategy-week-timeline-wrap">
+                  <div className="strategy-section-label">WEEK-BY-WEEK</div>
+                  <div className="strategy-week-timeline">
+                    {Array.from({ length: selected.roadmap.totalWeeks }, (_, i) => i + 1).map((week) => {
+                      const phase = getPhaseForWeek(week, selected.roadmap.phases);
+                      const wt = selected.roadmap.weeklyTargets?.find((t) => t.week === week);
+                      const color = phase ? phasePillColor(phase.name) : "rgba(238,240,244,0.25)";
+                      return (
+                        <div key={week} className="strategy-week-item">
+                          <div className="strategy-week-line-dot" style={{ background: color }} />
+                          <div className="strategy-week-card">
+                            <div className="strategy-week-card-header">
+                              <span className="strategy-week-number">Week {week}</span>
+                              {phase && (
+                                <span
+                                  className="strategy-week-phase-pill"
+                                  style={{
+                                    background: `${color}22`,
+                                    borderColor: color,
+                                    color,
+                                  }}
+                                >
+                                  {phase.name}
+                                </span>
+                              )}
+                            </div>
+                            {wt && (
+                              <div className="strategy-week-card-focus">
+                                {wt.focus}
+                                {wt.targetValue != null && wt.unit && (
+                                  <span className="strategy-week-target"> — {wt.targetValue} {wt.unit}</span>
+                                )}
+                                {wt.volumeKm != null && (
+                                  <span className="strategy-week-target"> — {wt.volumeKm} km</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="strategy-card">
                   <StrategyAdjustmentsPanel goal={selected} execution={execution ?? null} />
                 </div>
 
-                <div className="strategySection">
+                <div className="strategy-card">
                   <InjuryStatusPanel
                     injuryStatus={selected.injuryStatus ?? null}
                     onChange={handleInjuryChange}
                   />
                 </div>
 
-                <div className="strategySection strategyMilestoneControls">
-                  <h3 className="strategyMilestoneControlsTitle">Milestone updates</h3>
-                  <p className="strategyMilestoneControlsSub">Record actual performance to track deviation.</p>
-                  <div className="strategyMilestoneButtons">
+                <div className="strategy-card strategy-milestone-controls">
+                  <div className="strategy-section-label">MILESTONE UPDATES</div>
+                  <p className="strategy-milestone-sub">Record actual performance to track deviation.</p>
+                  <div className="strategy-milestone-buttons">
                     {selected.roadmap.milestones.map((m) => {
                       const targetVal =
                         selected.roadmap.kpis[0] &&
@@ -325,7 +406,7 @@ export default function StrategyPage() {
                         <button
                           key={m.id}
                           type="button"
-                          className="strategyMilestoneBtn"
+                          className="strategy-milestone-btn"
                           onClick={() =>
                             setMilestoneModalMilestone({
                               id: m.id,
@@ -342,7 +423,7 @@ export default function StrategyPage() {
                   </div>
                 </div>
 
-                <div className="strategySection">
+                <div className="strategy-card">
                   <StrategyKPIPanel kpis={selected.roadmap.kpis} />
                 </div>
               </>
@@ -359,250 +440,279 @@ export default function StrategyPage() {
               />
             )}
 
-            <div id="strategy-goal-form" className="strategySection strategySectionForm">
+            <div id="strategy-goal-form" className="strategy-card strategy-section-form">
               <GoalInputCard onGenerate={addGoal} currentBenchmarks={currentBenchmarks} />
             </div>
           </div>
 
           <style jsx>{`
-            .strategyOuter {
+            .strategy-page {
               min-height: 100vh;
-              background:
-                radial-gradient(circle at 20% 10%, rgba(47,128,237,0.12), transparent 40%),
-                radial-gradient(circle at 80% 90%, rgba(39,224,166,0.08), transparent 40%),
-                linear-gradient(180deg, #0a0a0f 0%, #0f1117 50%, #0a0a0f 100%);
-              color: #fff;
+              background: #0a0a0f;
+              color: rgba(238,240,244,0.95);
               position: relative;
               overflow-x: hidden;
             }
-            .strategyOuter::before {
-              content: "";
-              position: absolute;
-              inset: 0;
-              background:
-                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-              background-size: 40px 40px;
-              opacity: 0.4;
-              pointer-events: none;
-            }
-            .strategyNav {
+            .strategy-nav {
               display: flex;
               justify-content: space-between;
               align-items: center;
-              padding: 20px 40px;
-              border-bottom: 1px solid rgba(255,255,255,0.05);
-            }
-            .strategyBrand {
-              font-size: 12px;
-              letter-spacing: 2px;
-              opacity: 0.6;
-            }
-            .strategyTabs {
-              display: flex;
-              gap: 30px;
-            }
-            .strategyContainer {
-              max-width: 1200px;
-              margin: 0 auto;
-              padding: 40px;
-              position: relative;
-              z-index: 1;
-            }
-            .strategyHeaderRow {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              gap: 24px;
-              margin-bottom: 48px;
+              padding: 16px 20px;
+              border-bottom: 1px solid rgba(255,255,255,0.07);
+              gap: 12px;
               flex-wrap: wrap;
             }
-            .strategyHeader {
-              margin-bottom: 0;
-            }
-            .strategyPhase {
-              font-size: 11px;
+            .strategy-brand {
+              font-size: 10px;
+              font-weight: 700;
               letter-spacing: 0.12em;
-              opacity: 0.6;
-              margin-bottom: 8px;
+              text-transform: uppercase;
+              color: rgba(238,240,244,0.25);
             }
-            .strategyHeadline {
-              font-size: 28px;
-              font-weight: 600;
-              margin: 0 0 12px;
+            .strategy-tabs {
+              display: flex;
+              gap: 16px;
+              overflow-x: auto;
+              -webkit-overflow-scrolling: touch;
+              padding-bottom: 4px;
             }
-            .strategySub {
-              font-size: 15px;
-              opacity: 0.8;
+            .strategy-container {
+              max-width: 860px;
+              margin: 0 auto;
+              padding: 16px;
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+            }
+            .strategy-card {
+              background: rgba(255,255,255,0.04);
+              border: 1px solid rgba(255,255,255,0.07);
+              border-radius: 20px;
+              padding: 20px;
+            }
+            .strategy-section-label {
+              font-size: 10px;
+              font-weight: 700;
+              letter-spacing: 0.12em;
+              text-transform: uppercase;
+              color: rgba(238,240,244,0.25);
+              margin-bottom: 12px;
+            }
+            .strategy-header-card .strategy-headline {
+              font-size: 22px;
+              font-weight: 700;
+              color: rgba(238,240,244,0.95);
+              margin: 0 0 6px;
+            }
+            .strategy-header-card .strategy-sub {
+              font-size: 14px;
+              color: rgba(238,240,244,0.55);
               margin: 0;
               line-height: 1.5;
             }
-            .strategyGoalBar {
+            .strategy-goal-bar {
               display: flex;
               flex-wrap: wrap;
               align-items: center;
               justify-content: space-between;
-              gap: 16px;
-              margin-bottom: 48px;
+              gap: 12px;
             }
-            .strategyGoalPills {
+            .strategy-goal-pills {
               display: flex;
               flex-wrap: wrap;
               gap: 8px;
             }
-            .strategyGoalPill {
-              padding: 10px 18px;
-              font-size: 12px;
+            .strategy-goal-pill {
+              padding: 10px 16px;
+              font-size: 13px;
               font-weight: 500;
-              letter-spacing: 0.03em;
-              background: rgba(255, 255, 255, 0.05);
-              border: 1px solid rgba(255, 255, 255, 0.1);
+              background: rgba(255,255,255,0.04);
+              border: 1px solid rgba(255,255,255,0.07);
               border-radius: 999px;
-              color: rgba(255, 255, 255, 0.8);
+              color: rgba(238,240,244,0.95);
               cursor: pointer;
-              transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+              transition: background 0.2s, border-color 0.2s;
             }
-            .strategyGoalPill:hover {
-              background: rgba(255, 255, 255, 0.08);
-              border-color: rgba(39, 224, 166, 0.25);
-              box-shadow: 0 0 20px rgba(39, 224, 166, 0.15);
+            .strategy-goal-pill:hover {
+              background: rgba(255,255,255,0.08);
+              border-color: rgba(0,201,160,0.3);
             }
-            .strategyGoalPill.active {
-              background: rgba(39, 224, 166, 0.12);
-              border-color: rgba(39, 224, 166, 0.4);
+            .strategy-goal-pill.active {
+              background: rgba(0,201,160,0.12);
+              border-color: rgba(0,201,160,0.4);
               color: #fff;
-              box-shadow: 0 0 24px rgba(39, 224, 166, 0.25);
             }
-            .strategyGoalActions {
+            .strategy-goal-actions {
               display: flex;
-              gap: 10px;
+              gap: 8px;
             }
-            .strategyGoalBtn {
-              padding: 8px 14px;
+            .strategy-goal-btn {
+              padding: 10px 14px;
               font-size: 11px;
-              font-weight: 600;
+              font-weight: 700;
               letter-spacing: 0.06em;
               text-transform: uppercase;
-              border-radius: 8px;
+              border-radius: 10px;
               cursor: pointer;
-              transition: opacity 0.2s ease, box-shadow 0.2s ease;
               text-decoration: none;
-              color: inherit;
+              transition: opacity 0.2s;
             }
-            .strategyGoalBtnAdd {
-              background: rgba(39, 224, 166, 0.15);
-              border: 1px solid rgba(39, 224, 166, 0.35);
-              color: rgba(39, 224, 166, 0.95);
+            .strategy-goal-btn-add {
+              background: rgba(0,201,160,0.15);
+              border: 1px solid rgba(0,201,160,0.35);
+              color: rgba(0,201,160,0.95);
             }
-            .strategyGoalBtnAdd:hover {
-              box-shadow: 0 0 20px rgba(39, 224, 166, 0.25);
-            }
-            .strategyGoalBtnRemove {
+            .strategy-goal-btn-remove {
               background: transparent;
-              border: 1px solid rgba(255, 255, 255, 0.15);
-              color: rgba(255, 255, 255, 0.7);
+              border: 1px solid rgba(255,255,255,0.12);
+              color: rgba(238,240,244,0.55);
             }
-            .strategyGoalBtnRemove:hover {
-              border-color: rgba(239, 68, 68, 0.4);
-              color: rgba(254, 202, 202, 0.95);
+            .strategy-goal-btn-remove:hover {
+              border-color: rgba(239,68,68,0.4);
+              color: rgba(254,202,202,0.95);
             }
-            .strategySection {
-              margin-bottom: 48px;
+            .strategy-phase-pills-wrap {
+              padding-top: 16px;
             }
-            .strategySectionForm {
-              margin-bottom: 0;
-            }
-            .strategySectionExecution {
-              display: flex;
-              justify-content: flex-start;
-            }
-            .strategyExecutionCard {
-              position: relative;
-              width: 120px;
-              padding: 24px 28px;
-              background: rgba(255, 255, 255, 0.04);
-              border: 1px solid rgba(255, 255, 255, 0.06);
-              border-radius: 12px;
-              text-align: center;
-              box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
-            }
-            .strategyExecutionGlow {
-              position: absolute;
-              inset: -20px;
-              background: radial-gradient(circle, rgba(39, 224, 166, 0.12) 0%, transparent 70%);
-              border-radius: 50%;
-              pointer-events: none;
-              animation: strategyExecutionPulse 3s ease-in-out infinite;
-            }
-            .strategyExecutionPercent {
-              position: relative;
-              font-size: 36px;
-              font-weight: 700;
-              letter-spacing: -0.02em;
-              color: #fff;
-              line-height: 1.1;
-            }
-            .strategyExecutionConfidence {
-              position: relative;
-              margin-top: 8px;
-              font-size: 9px;
-              font-weight: 600;
-              letter-spacing: 0.12em;
-              text-transform: uppercase;
-              opacity: 0.65;
-            }
-            .strategyExecutionRiskDrivers {
-              position: relative;
-              margin: 12px 0 0;
-              padding-left: 14px;
-              font-size: 9px;
-              opacity: 0.7;
-              line-height: 1.4;
-            }
-            .strategyMilestoneControlsTitle {
-              font-size: 14px;
-              font-weight: 700;
-              letter-spacing: 0.04em;
-              margin: 0 0 6px;
-              color: #fff;
-            }
-            .strategyMilestoneControlsSub {
-              font-size: 11px;
-              opacity: 0.65;
-              margin: 0 0 14px;
-              line-height: 1.4;
-            }
-            .strategyMilestoneButtons {
+            .strategy-phase-pills {
               display: flex;
               flex-wrap: wrap;
               gap: 8px;
             }
-            .strategyMilestoneBtn {
-              padding: 8px 14px;
+            .strategy-phase-pill {
+              display: inline-block;
+              padding: 6px 12px;
               font-size: 11px;
+              font-weight: 600;
+              letter-spacing: 0.04em;
+              border-radius: 999px;
+              border: 1px solid;
+            }
+            .strategy-execution-card .strategy-execution-inner {
+              position: relative;
+              padding: 20px;
+              background: rgba(255,255,255,0.02);
+              border-radius: 12px;
+              text-align: center;
+            }
+            .strategy-execution-percent {
+              font-size: 32px;
+              font-weight: 700;
+              color: rgba(238,240,244,0.95);
+              line-height: 1.1;
+            }
+            .strategy-execution-confidence {
+              margin-top: 8px;
+              font-size: 9px;
+              font-weight: 700;
+              letter-spacing: 0.12em;
+              text-transform: uppercase;
+              color: rgba(238,240,244,0.55);
+            }
+            .strategy-execution-risk-drivers {
+              margin: 12px 0 0;
+              padding-left: 18px;
+              font-size: 11px;
+              color: rgba(238,240,244,0.55);
+              line-height: 1.5;
+            }
+            .strategy-chart-wrap {
+              overflow: hidden;
+            }
+            .strategy-chart-scroll {
+              overflow-x: auto;
+              -webkit-overflow-scrolling: touch;
+              max-width: 100%;
+              min-width: 0;
+            }
+            .strategy-week-timeline-wrap {
+              padding-left: 8px;
+            }
+            .strategy-week-timeline {
+              position: relative;
+              padding-left: 20px;
+              border-left: 3px solid #00c9a0;
+            }
+            .strategy-week-item {
+              position: relative;
+              padding-bottom: 12px;
+            }
+            .strategy-week-item:last-child {
+              padding-bottom: 0;
+            }
+            .strategy-week-line-dot {
+              position: absolute;
+              left: -26px;
+              top: 10px;
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+            }
+            .strategy-week-card {
+              background: rgba(255,255,255,0.04);
+              border: 1px solid rgba(255,255,255,0.07);
+              border-radius: 12px;
+              padding: 12px 14px;
+              margin-left: 0;
+            }
+            .strategy-week-card-header {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              flex-wrap: wrap;
+            }
+            .strategy-week-number {
+              font-size: 14px;
+              font-weight: 700;
+              color: rgba(238,240,244,0.95);
+            }
+            .strategy-week-phase-pill {
+              font-size: 10px;
+              font-weight: 600;
+              letter-spacing: 0.04em;
+              padding: 4px 8px;
+              border-radius: 999px;
+              border: 1px solid;
+            }
+            .strategy-week-card-focus {
+              font-size: 12px;
+              color: rgba(238,240,244,0.55);
+              margin-top: 6px;
+              line-height: 1.4;
+            }
+            .strategy-week-target {
+              color: rgba(238,240,244,0.4);
+            }
+            .strategy-milestone-sub {
+              font-size: 12px;
+              color: rgba(238,240,244,0.55);
+              margin: 0 0 12px;
+              line-height: 1.4;
+            }
+            .strategy-milestone-buttons {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+            }
+            .strategy-milestone-btn {
+              padding: 10px 14px;
+              font-size: 12px;
               font-weight: 500;
-              background: rgba(255, 255, 255, 0.06);
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              border-radius: 8px;
-              color: rgba(255, 255, 255, 0.9);
+              background: rgba(255,255,255,0.04);
+              border: 1px solid rgba(255,255,255,0.07);
+              border-radius: 10px;
+              color: rgba(238,240,244,0.95);
               cursor: pointer;
-              transition: box-shadow 0.2s ease, border-color 0.2s ease;
+              transition: border-color 0.2s, background 0.2s;
             }
-            .strategyMilestoneBtn:hover {
-              border-color: rgba(39, 224, 166, 0.35);
-              box-shadow: 0 0 16px rgba(39, 224, 166, 0.12);
+            .strategy-milestone-btn:hover {
+              border-color: rgba(0,201,160,0.35);
+              background: rgba(0,201,160,0.06);
             }
-            @keyframes strategyExecutionPulse {
-              0%, 100% { opacity: 0.6; transform: scale(1); }
-              50% { opacity: 1; transform: scale(1.05); }
-            }
-            @media (max-width: 768px) {
-              .strategyNav { padding: 16px; flex-wrap: wrap; gap: 12px; }
-              .strategyTabs { gap: 16px; flex-wrap: wrap; }
-              .strategyContainer { padding: 16px; }
-              .strategyHeaderRow { margin-bottom: 32px; }
-              .strategyGoalBar { margin-bottom: 32px; }
-              .strategySection { margin-bottom: 32px; }
+            @media (max-width: 375px) {
+              .strategy-container { padding: 12px; }
+              .strategy-card { padding: 16px; }
+              .strategy-nav { padding: 12px; }
             }
           `}</style>
         </div>
