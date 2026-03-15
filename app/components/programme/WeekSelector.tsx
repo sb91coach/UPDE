@@ -2,8 +2,7 @@
 
 /**
  * WeekSelector — horizontal week selector for programme navigation.
- * Displays week buttons, highlights the active week, triggers week change via callback.
- * Additive component; does not modify existing layout or styling.
+ * Mobile-first: horizontal scroll, 44px touch targets, teal active indicator.
  */
 
 export type WeekSelectorProps = {
@@ -31,41 +30,64 @@ export default function WeekSelector({
       role="tablist"
       aria-label="Select week"
       style={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: 8,
         marginBottom: 16,
+        overflow: "hidden",
       }}
     >
-      {weeks.map((weekNum) => {
-        const isActive = weekNum === selectedWeek;
-        return (
-          <button
-            key={weekNum}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            aria-label={`Week ${weekNum}`}
-            onClick={() => onWeekChange(weekNum)}
-            style={{
-              padding: "10px 16px",
-              minWidth: 72,
-              fontSize: 13,
-              fontWeight: isActive ? 600 : 500,
-              color: isActive ? "#fff" : "rgba(255,255,255,0.85)",
-              background: isActive
-                ? "linear-gradient(135deg, rgba(47,128,237,0.4), rgba(39,224,166,0.2))"
-                : "rgba(255,255,255,0.06)",
-              border: isActive ? "1px solid rgba(47,128,237,0.5)" : "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 10,
-              cursor: "pointer",
-              transition: "background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
-            }}
-          >
-            Week {weekNum}
-          </button>
-        );
-      })}
+      <div
+        className="weekSelectorScroll"
+        role="presentation"
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          flexWrap: "nowrap",
+          gap: 8,
+          overflowX: "auto",
+          overflowY: "hidden",
+          scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
+          paddingBottom: 4,
+        }}
+      >
+        {weeks.map((weekNum) => {
+          const isActive = weekNum === selectedWeek;
+          return (
+            <button
+              key={weekNum}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-label={`Week ${weekNum}`}
+              onClick={() => onWeekChange(weekNum)}
+              style={{
+                flexShrink: 0,
+                padding: "10px 18px",
+                minHeight: 44,
+                minWidth: 80,
+                whiteSpace: "nowrap",
+                fontSize: 14,
+                fontWeight: isActive ? 600 : 500,
+                color: isActive ? "#00C9A0" : "rgba(255,255,255,0.85)",
+                background: isActive ? "rgba(0,201,160,0.2)" : "rgba(255,255,255,0.06)",
+                border: isActive ? "1px solid #00C9A0" : "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 10,
+                cursor: "pointer",
+                transition: "background 0.2s ease, border-color 0.2s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Week {weekNum}
+            </button>
+          );
+        })}
+      </div>
+      <style jsx>{`
+        .weekSelectorScroll::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }

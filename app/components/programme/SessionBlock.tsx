@@ -1,10 +1,10 @@
 "use client";
 
+import { useState } from "react";
 /**
  * SessionBlock — renders a single block within an expanded day (Prep, Main, Accessory, Conditioning, etc.).
  * Renders all exercises as ExerciseCards (name, sets, reps, load, rest, tempo, notes + SetTracker + RestTimer).
- * Supports both string exercises (parsed into ExerciseData) and structured ExerciseData objects.
- * Additive component; does not modify existing layout or styling.
+ * On mobile, block is collapsible (expandable card).
  */
 
 import ExerciseCard, { type ExerciseData } from "./ExerciseCard";
@@ -104,6 +104,19 @@ export function getTotalSetsFromBlocks(blocks: SessionBlockData[]): number {
   }, 0);
 }
 
+/**
+ * Flatten all exercises from blocks into a single list (for workout execution view).
+ */
+export function getFlattenedExercisesFromBlocks(blocks: SessionBlockData[]): ExerciseData[] {
+  const out: ExerciseData[] = [];
+  for (const block of blocks) {
+    if (block.type === "performanceNotes") continue;
+    const ex = block.exercises ?? [];
+    for (const e of ex) out.push(normalizeExercise(e));
+  }
+  return out;
+}
+
 export type SessionBlockProps = {
   block: SessionBlockData;
   index?: number;
@@ -116,13 +129,14 @@ export type SessionBlockProps = {
 };
 
 export default function SessionBlock({ block, index: blockIndex = 0, onSetCompletionChange, sessionDate, unit = "kg", showRpe = false }: SessionBlockProps) {
+  const [mobileOpen, setMobileOpen] = useState(blockIndex === 0);
   const label = block.label ?? BLOCK_LABELS[block.type];
 
   if (block.type === "performanceNotes") {
     return (
       <div
         style={{
-          padding: "14px 18px",
+          padding: "14px 16px",
           background: "rgba(255,255,255,0.04)",
           border: "1px solid rgba(255,255,255,0.06)",
           borderRadius: 12,
@@ -131,7 +145,7 @@ export default function SessionBlock({ block, index: blockIndex = 0, onSetComple
       >
         <div
           style={{
-            fontSize: 10,
+            fontSize: 11,
             letterSpacing: "0.08em",
             opacity: 0.7,
             marginBottom: 6,
@@ -139,7 +153,7 @@ export default function SessionBlock({ block, index: blockIndex = 0, onSetComple
         >
           {label}
         </div>
-        <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.9 }}>
+        <div style={{ fontSize: 14, lineHeight: 1.5, opacity: 0.9 }}>
           {block.text || "—"}
         </div>
       </div>
@@ -152,7 +166,7 @@ export default function SessionBlock({ block, index: blockIndex = 0, onSetComple
     return (
       <div
         style={{
-          padding: "14px 18px",
+          padding: "14px 16px",
           background: "rgba(255,255,255,0.04)",
           border: "1px solid rgba(255,255,255,0.06)",
           borderRadius: 12,
@@ -161,7 +175,7 @@ export default function SessionBlock({ block, index: blockIndex = 0, onSetComple
       >
         <div
           style={{
-            fontSize: 10,
+            fontSize: 11,
             letterSpacing: "0.08em",
             opacity: 0.85,
             marginBottom: 8,
@@ -170,7 +184,7 @@ export default function SessionBlock({ block, index: blockIndex = 0, onSetComple
         >
           {label}
         </div>
-        <div style={{ fontSize: 13, opacity: 0.7 }}>—</div>
+        <div style={{ fontSize: 14, opacity: 0.7 }}>—</div>
       </div>
     );
   }
@@ -179,42 +193,58 @@ export default function SessionBlock({ block, index: blockIndex = 0, onSetComple
 
   return (
     <div
+      className="sessionBlockRoot"
       style={{
-        padding: "14px 18px",
+        padding: "14px 16px",
         background: "rgba(255,255,255,0.04)",
         border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: 12,
         marginBottom: 12,
       }}
     >
-      <div
-        style={{
-          fontSize: 10,
-          letterSpacing: "0.08em",
-          opacity: 0.85,
-          marginBottom: 8,
-          fontWeight: 600,
-        }}
+      <button
+        type="button"
+        onClick={() => setMobileOpen((o) => !o)}
+        className="sessionBlockToggle md:pointer-events-none md:cursor-default w-full text-left flex items-center justify-between gap-2 min-h-[44px] py-3"
+        aria-expanded={mobileOpen}
       >
-        {label}
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-        {normalizedExercises.map((exercise, i) => (
-          <ExerciseCard
-            key={`${exercise.name}-${blockIndex}-${i}`}
-            exercise={exercise}
-            index={i}
-            exerciseKey={`block-${blockIndex}-ex-${i}`}
-            sessionDate={sessionDate}
-            unit={unit}
-            showRpe={showRpe}
-            onCompletedChange={
-              onSetCompletionChange
-                ? (completed, total) => onSetCompletionChange(blockIndex, i, completed, total)
-                : undefined
-            }
-          />
+        <div
+          style={{
+            fontSize: 11,
+            letterSpacing: "0.08em",
+            opacity: 0.85,
+            fontWeight: 600,
+          }}
+        >
+          {label}
+        </div>
+        <span
+          className="sessionBlockChevron md:hidden text-white/70 text-lg flex items-center justify-center min-w-[44px] min-h-[44px]"
+          style={{ margin: "-8px -8px -8px 0" }}
+          aria-hidden
+        >
+          {mobileOpen ? "▼" : "▶"}
+        </span>
+      </button>
+      <div className={`sessionBlockContent flex flex-col gap-0 mt-2 ${mobileOpen ? "block" : "hidden"} md:block`}>
+        <div className="flex flex-col gap-0">
+          {normalizedExercises.map((exercise, i) => (
+            <ExerciseCard
+              key={`${exercise.name}-${blockIndex}-${i}`}
+              exercise={exercise}
+              index={i}
+              exerciseKey={`block-${blockIndex}-ex-${i}`}
+              sessionDate={sessionDate}
+              unit={unit}
+              showRpe={showRpe}
+              onCompletedChange={
+                onSetCompletionChange
+                  ? (completed, total) => onSetCompletionChange(blockIndex, i, completed, total)
+                  : undefined
+              }
+            />
         ))}
+        </div>
       </div>
     </div>
   );

@@ -92,7 +92,7 @@ export default function NutritionMacroChart({
   const innerW = w - pad.left - pad.right;
   const innerH = h - pad.top - pad.bottom;
 
-  const { paths, areas, toX, toY, minY, maxY } = useMemo(() => {
+  const { paths, areas, minY, maxY } = useMemo(() => {
     const allVals = data.flatMap((d) => [d.protein, d.carbs, d.fats, d.calories]);
     const minY = Math.min(...allVals, 0) - 20;
     const maxY = Math.max(...allVals, 2500) + 100;
@@ -113,7 +113,7 @@ export default function NutritionMacroChart({
       areas[key] = `${paths[key]} L ${toX(n - 1)} ${bottom} L ${toX(0)} ${bottom} Z`;
     });
 
-    return { paths, areas, toX, toY, minY, maxY };
+    return { paths, areas, minY, maxY };
   }, [data]);
 
   const toggle = (k: MacroKey) =>

@@ -2,7 +2,6 @@ import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { NextResponse } from "next/server";
 import {
   logInjury,
-  updateInjury,
   type InjuryEntry,
   type InjuryPayload,
 } from "@/engine/injuryMemoryEngine";

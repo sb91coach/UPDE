@@ -1,6 +1,6 @@
 /**
  * Identity schema — types and labels for performance identity classification.
- * Used by engine/identityClassifier and dashboard identity row.
+ * Used by dashboard identity row and lib/profile/identityModel.
  */
 
 export type IdentityLabel =

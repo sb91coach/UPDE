@@ -20,15 +20,7 @@ import {
   type CurrentBenchmarks,
 } from "@/lib/goalEngine";
 import type { PerformanceBenchmarks } from "@/lib/profile/benchmarkSchema";
-import {
-  loadStrategyGoals,
-  addStrategyGoal,
-  removeStrategyGoal,
-  updateStrategyGoal,
-  type StrategyGoal,
-  type InjuryStatus,
-  type MilestoneProgressEntry,
-} from "@/lib/strategyStore";
+import type { StrategyGoal, InjuryStatus } from "@/lib/strategyStore";
 import { PerformanceEngine } from "@/lib/performanceEngine";
 import { subscribe as subscribePerformance } from "@/lib/performanceEvents";
 

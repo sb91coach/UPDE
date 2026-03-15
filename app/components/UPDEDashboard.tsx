@@ -14,13 +14,14 @@ import { usePerformanceForecast } from "@/hooks/usePerformanceForecast";
 import DecisionLog from "@/app/ui/DecisionLog";
 import type { DecisionLogEntry } from "@/app/ui/DecisionLog";
 import type { InjuryEntry } from "@/engine/injuryMemoryEngine";
-import { getAdvisories } from "@/engine/advisoriesEngine";
 import { generateWeeklyBrief } from "@/engine/weeklyBriefGenerator";
 import { systemBiasPhrase } from "@/engine/systemBias";
 import { getRiskSignals } from "@/engine/riskIndex";
 import RiskBadge from "@/app/ui/RiskBadge";
 import { PerformanceEngine } from "@/lib/performanceEngine";
 import { subscribe as subscribePerformance } from "@/lib/performanceEvents";
+import { buildCapacityProfile } from "@/engine/capacityEngine";
+import CapacityRadarSix from "@/app/components/CapacityRadarSix";
 
 type Profile = {
   id: string;
@@ -87,6 +88,17 @@ export default function UPDEDashboard() {
   const [readinessBreakdown, setReadinessBreakdown] = useState<ReturnType<typeof PerformanceEngine.getReadinessBreakdown> | null>(null);
   const [capacityBreakdownExpanded, setCapacityBreakdownExpanded] = useState(false);
   const pathname = usePathname();
+
+  const historicalPpsForForecast = useMemo(() => {
+    if (!profile) return [70, 71, 72, 73, 74, 75, 76, 77];
+    const base = profile.readiness_score ?? 70;
+    return Array.from({ length: 8 }, (_, i) => base - 4 + i + (i % 3 === 0 ? 1 : 0));
+  }, [profile]);
+  const adherenceForForecast = 0.85;
+  const consistencyScoreForForecast = profile
+    ? Math.round((profile.aerobic_score + profile.strength_upper + profile.strength_lower) / 3) || 70
+    : 70;
+  const performanceForecast = usePerformanceForecast(historicalPpsForForecast, adherenceForForecast, consistencyScoreForForecast, 8);
 
   useEffect(() => {
     setStrategicInsights(PerformanceEngine.getStrategicInsights());
@@ -253,6 +265,24 @@ export default function UPDEDashboard() {
     [profileSnapshot]
   );
 
+  const capacityProfile = useMemo(
+    () =>
+      profile
+        ? buildCapacityProfile({
+            strength_upper: profile.strength_upper,
+            strength_lower: profile.strength_lower,
+            aerobic_score: profile.aerobic_score,
+            mobility_score: profile.mobility_score,
+            durability_score: (profile as { durability_score?: number }).durability_score,
+            recovery_score: readinessComposite ?? profile.readiness_score,
+            sleep_score: profile.sleep_score,
+            stress_level: profile.stress_level,
+            lastUpdated: profile.checkin_date ?? undefined,
+          })
+        : null,
+    [profile, readinessComposite]
+  );
+
   if (!profile) return null;
   const p = profile;
 
@@ -297,17 +327,6 @@ export default function UPDEDashboard() {
   }
 
   const adaptation = getAdaptation();
-  const advisories = getAdvisories({
-    readiness: p.checkin_readiness ?? 7,
-    feel: (p.checkin_feel as "good" | "okay" | "poor") ?? "okay",
-    pain: (p.checkin_pain as "none" | "yes") ?? "none",
-    painAreas: p.checkin_pain_areas ?? null,
-    energy: (p.checkin_energy as "low" | "medium" | "high") ?? "medium",
-    sleep: (p.checkin_sleep as "poor" | "okay" | "good") ?? "okay",
-    adaptation,
-    sessionFocus: "Lower body",
-  });
-  const hasCheckinToday = profile.checkin_date === todayStr();
 
   const DASHBOARD_PHASES = ["Accumulation", "Accumulation", "Intensification", "Intensification", "Overreach", "Deload"];
   const MACROCYCLE_LABELS: Record<string, string> = { Accumulation: "GPP", Intensification: "SPP", Overreach: "SPP", Deload: "Recovery" };
@@ -324,14 +343,7 @@ export default function UPDEDashboard() {
   const trainingFocus = systemBiasPhrase(p);
   const capacityPts = Math.round((p.aerobic_score + (p.strength_upper + p.strength_lower) / 2) / 2);
 
-  const historicalPps = (() => {
-    const base = p.readiness_score ?? 70;
-    return Array.from({ length: 8 }, (_, i) => base - 4 + i + (i % 3 === 0 ? 1 : 0));
-  })();
-  const adherence = 0.85;
-  const consistencyScore = Math.round((p.aerobic_score + p.strength_upper + p.strength_lower) / 3) || 70;
-  const performanceForecast = usePerformanceForecast(historicalPps, adherence, consistencyScore, 8);
-  const baselinePps = historicalPps[historicalPps.length - 1] ?? 70;
+  const baselinePps = historicalPpsForForecast[historicalPpsForForecast.length - 1] ?? 70;
   const projectedPpsPercent =
     performanceForecast.projected.length > 0
       ? performanceForecast.projected.map(
@@ -351,6 +363,7 @@ export default function UPDEDashboard() {
         <div className="tabs">
           <NavTab href="/" label="Home" pathname={pathname} />
           <NavTab href="/profile" label="Profile" pathname={pathname} />
+          <NavTab href="/coach" label="Coach" pathname={pathname} />
           <NavTab href="/programme" label="Programme" pathname={pathname} />
           <NavTab href="/tactical" label="Tactical" pathname={pathname} />
           <NavTab href="/tactical/input" label="Daily Input" pathname={pathname} />
@@ -417,6 +430,19 @@ export default function UPDEDashboard() {
                   <span className="programmeBoxLabel">Your programme</span>
                   <span className="programmeBoxValue">{programmeLabel} · {phaseLabel}</span>
                 </div>
+              </div>
+            </div>
+          </section>
+
+          {/* 1b) Capacity Profile — six domains (Performance Pathfinder Coaching System) */}
+          <section className="dashboardSection" style={{ padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+              <div className="flex-shrink-0">
+                <CapacityRadarSix profile={capacityProfile} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <strong className="block text-sm font-semibold mb-2" style={{ letterSpacing: "0.04em" }}>Capacity Profile</strong>
+                <p className="text-xs opacity-80 m-0">Force Production, Force Expression, Energy System Efficiency, Movement Integrity, Durability, Recovery Capacity. Tier: Low → Developing → Advanced → High Performance → Elite.</p>
               </div>
             </div>
           </section>
@@ -725,6 +751,12 @@ export default function UPDEDashboard() {
                 )}
               </section>
             )}
+
+            {/* 2c) Capacity Profile — six domains (mobile) */}
+            <section className="mobileSection" style={{ padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}>
+              <strong className="block text-sm font-semibold mb-2" style={{ letterSpacing: "0.04em" }}>Capacity Profile</strong>
+              <CapacityRadarSix profile={capacityProfile} />
+            </section>
 
             {/* 3) Readiness Dial */}
             <section className="mobileSection mobileSectionReadiness">
@@ -2058,14 +2090,6 @@ function Identity({ label, value }: any) {
   );
 }
 
-function getBenchmarkKg(profile: Profile | null, key: string): number | null {
-  if (!profile?.performance_benchmarks?.exerciseBenchmarks) return null;
-  const b = profile.performance_benchmarks.exerciseBenchmarks[key as keyof typeof profile.performance_benchmarks.exerciseBenchmarks];
-  if (!b) return null;
-  const v = b.oneRM ?? b.estimatedOneRM;
-  return v != null && v > 0 ? v : null;
-}
-
 function getTop4Benchmarks(profile: Profile | null): { key: string; label: string; value: number | null }[] {
   const bench = profile?.performance_benchmarks?.exerciseBenchmarks ?? {};
   const entries = Object.entries(bench)
@@ -2096,42 +2120,6 @@ function BenchmarkPill({ label, value }: { label: string; value: number | null }
       </div>
       <div style={{fontWeight:600}}>
         {value != null ? `${value} kg` : "—"}
-      </div>
-    </div>
-  );
-}
-
-function Signal({ title, subtitle }: any) {
-  return (
-    <div style={{
-      background:"rgba(255,255,255,0.05)",
-      padding:18,
-      borderRadius:16,
-      marginBottom:12
-    }}>
-      <div style={{fontWeight:600}}>
-        {title}
-      </div>
-      <div style={{opacity:0.6,fontSize:13}}>
-        {subtitle}
-      </div>
-    </div>
-  );
-}
-
-function SessionCard() {
-  return (
-    <div className="sessionCard">
-      <div className="sessionCardHead">
-        <div>
-          <div className="sessionCardMeta">TODAY'S SESSION · VIEW PROGRAMME</div>
-          <div className="sessionCardTitle">Lower Body Aerobic</div>
-          <div className="sessionCardDetail">60 min · 4 exercises · Low–Mod intensity</div>
-        </div>
-        <Link href="/programme" className="sessionCardCtaLink">View programme →</Link>
-      </div>
-      <div className="sessionCardHint">
-        Targets what's holding you back: Aerobic Capacity
       </div>
     </div>
   );

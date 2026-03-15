@@ -101,7 +101,7 @@ export default function GoalProjectionChart({
       const status = getMilestoneStatus(m, value, progress, isTime);
       return { ...m, value, phase, progress, status };
     });
-  }, [milestones, phases, totalWeeks, currentVal, targetVal, progressByMilestone]);
+  }, [milestones, phases, totalWeeks, currentVal, targetVal, progressByMilestone, isTime]);
 
   const w = 700;
   const h = 260;

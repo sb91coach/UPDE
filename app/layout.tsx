@@ -9,8 +9,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Performance Pathfinder",
-  description: "Adaptive strength and conditioning programmes built from your physiology.",
+  title: "Performance Pathfinder Coaching System",
+  description: "AI-driven performance coaching: diagnostics, capacity profile, programme generation, readiness monitoring, automatic adaptation.",
 };
 
 export default function RootLayout({

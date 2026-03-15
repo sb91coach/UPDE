@@ -69,39 +69,49 @@ export default function ExerciseCard({
 
   const isYoutube = demoUrl?.includes("youtube") || demoUrl?.includes("youtu.be");
 
+  const detailParts = [
+    prescription,
+    rest != null && rest !== "" ? `Rest ${rest}` : null,
+    tempo != null && tempo !== "" ? `Tempo ${tempo}` : null,
+  ].filter(Boolean) as string[];
+
   return (
     <>
       <div
+        className="exerciseCardRoot p-4 sm:p-5 rounded-xl mb-3 min-w-0"
         style={{
-          padding: "18px 20px",
           background: "rgba(255,255,255,0.04)",
           border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 14,
-          marginBottom: 12,
         }}
       >
         <div
+          className="exerciseCardName"
           style={{
-            fontSize: 16,
+            fontSize: "clamp(14px, 4vw, 16px)",
             fontWeight: 700,
-            marginBottom: 8,
+            marginBottom: 4,
             opacity: 0.98,
             letterSpacing: "-0.01em",
+            lineHeight: 1.3,
           }}
         >
           {name}
         </div>
 
-        {prescription && (
-          <div style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, marginBottom: 6 }}>
-            {prescription}
+        {detailParts.length > 0 && (
+          <div
+            className="exerciseCardDetail"
+            style={{
+              fontSize: 14,
+              fontWeight: 500,
+              opacity: 0.75,
+              marginBottom: notes ? 10 : 8,
+              lineHeight: 1.4,
+            }}
+          >
+            {detailParts.join(" · ")}
           </div>
         )}
-
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "12px 20px", fontSize: 13, opacity: 0.85, marginBottom: notes ? 10 : 0 }}>
-          {rest != null && rest !== "" && <span>Rest {rest}</span>}
-          {tempo != null && tempo !== "" && <span>Tempo {tempo}</span>}
-        </div>
 
         {notes != null && notes !== "" && (
           <div
@@ -117,8 +127,8 @@ export default function ExerciseCard({
               opacity: 0.9,
             }}
           >
-            <div style={{ fontSize: 10, letterSpacing: "0.06em", opacity: 0.75, marginBottom: 4 }}>Coach Note</div>
-            {notes}
+            <div style={{ fontSize: 11, letterSpacing: "0.06em", opacity: 0.75, marginBottom: 4 }}>Coach Note</div>
+            <span style={{ fontSize: 14 }}>{notes}</span>
           </div>
         )}
 
@@ -130,16 +140,18 @@ export default function ExerciseCard({
               style={{
                 display: "inline-flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: 8,
-                padding: "10px 16px",
-                fontSize: 13,
+                padding: "12px 16px",
+                minHeight: 44,
+                minWidth: 44,
+                fontSize: 14,
                 fontWeight: 600,
                 background: "rgba(47,128,237,0.25)",
                 border: "1px solid rgba(47,128,237,0.45)",
                 borderRadius: 10,
                 color: "#93c5fd",
                 cursor: "pointer",
-                minHeight: 44,
               }}
             >
               Watch Demo

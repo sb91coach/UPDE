@@ -1,18 +1,16 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { RequireAuth } from "@/lib/requireAuth";
 import type { ProgrammeType } from "@/lib/trainingTargets";
-import { getExerciseVideos } from "@/lib/exerciseVideos";
+import { getExerciseVideo } from "@/lib/exerciseVideos";
 import { getBenchmarks } from "@/engine/benchmarkEngine";
 import { prescribe } from "@/engine/prescriptionEngine";
 import { getRiskSignals } from "@/engine/riskIndex";
 import { generateWeeklyBrief } from "@/engine/weeklyBriefGenerator";
 import { EXERCISE_DISPLAY_NAMES } from "@/lib/profile/benchmarkSchema";
-import ProgrammeCard from "@/app/ui/ProgrammeCard";
 import WeeklyBrief from "@/app/ui/WeeklyBrief";
 import DailyAdvisories from "@/app/ui/DailyAdvisories";
 import { getAdvisories } from "@/engine/advisoriesEngine";
@@ -21,44 +19,19 @@ import { getAdaptiveGuardrails, applyIntensityCap } from "@/engine/adaptiveGuard
 import type { BehaviourDriftOutput } from "@/engine/behaviourDriftModel";
 import { PerformanceEngine } from "@/lib/performanceEngine";
 import { subscribe as subscribePerformance } from "@/lib/performanceEvents";
-import type { ProgrammeData, ProgrammeInjuryAdjustment } from "@/lib/performanceEngine";
+import type { ProgrammeData } from "@/lib/performanceEngine";
 import OSLayer from "@/app/components/OSLayer";
 import WeekSelector from "@/app/components/programme/WeekSelector";
 import ProgrammeWeekView from "@/app/components/programme/ProgrammeWeekView";
 import type { ProgrammeWeekData } from "@/app/components/programme/ProgrammeWeekView";
 import type { ProgrammeDayData } from "@/app/components/programme/DayAccordion";
-import type { SessionBlockData } from "@/app/components/programme/SessionBlock";
+import { getFlattenedExercisesFromBlocks, type SessionBlockData } from "@/app/components/programme/SessionBlock";
+import WorkoutSessionView from "@/app/components/programme/WorkoutSessionView";
+import WeekCalendarView from "@/app/components/programme/WeekCalendarView";
 import programme from "@/data/programmes";
 import type { ProgrammeDay as ProgrammeDayFromData, ProgrammeSessionBlock } from "@/data/programmes";
-
-function NavTab({
-  href,
-  label,
-  pathname,
-}: {
-  href: string;
-  label: string;
-  pathname: string;
-}) {
-  const active = pathname === href;
-  return (
-    <Link
-      href={href}
-      className={active ? "active" : undefined}
-      style={{
-        fontSize: 14,
-        opacity: active ? 1 : 0.6,
-        borderBottom: active ? "2px solid #2F80ED" : "2px solid transparent",
-        paddingBottom: 4,
-        cursor: "pointer",
-        textDecoration: "none",
-        color: "inherit",
-      }}
-    >
-      {label}
-    </Link>
-  );
-}
+import ProgrammeNavBar from "@/app/components/programme/ProgrammeNavBar";
+import { PaywallGate } from "@/app/components/PaywallGate";
 
 /* ======================================================
    PROFILE TYPE (linked from intake)
@@ -94,6 +67,7 @@ type Profile = {
   checkin_energy?: string;
   checkin_sleep?: string;
   performance_benchmarks?: import("@/lib/profile/benchmarkSchema").PerformanceBenchmarks | null;
+  subscription_tier?: string | null;
 };
 
 type AdaptationLevel = "reduce" | "normal" | "increase";
@@ -131,7 +105,6 @@ const PERFORMANCE_MARKERS = [
 
 export default function ProgrammePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [expanded, setExpanded] = useState<number | null>(0);
   const [videoModal, setVideoModal] = useState<{
     videoId: string;
     label: string;
@@ -158,10 +131,13 @@ export default function ProgrammePage() {
   const [selectedPhase, setSelectedPhase] = useState<number>(0);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [workoutMode, setWorkoutMode] = useState(false);
+  const [completedSessionNames, setCompletedSessionNames] = useState<string[]>([]);
   const lastDecisionLogDateRef = useRef<string | null>(null);
   const guardrailLoggedRef = useRef(false);
   const simplificationLoggedRef = useRef(false);
-  const router = useRouter();
+  const pathname = usePathname();
   const todayStr = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
@@ -339,6 +315,20 @@ export default function ProgrammePage() {
     });
   }, [profile, todayStr]);
 
+  useEffect(() => {
+    if (!profile?.id || selectedWeek == null) return;
+    (async () => {
+      const { data } = await supabase
+        .from("session_logs")
+        .select("session_name")
+        .eq("profile_id", profile.id)
+        .eq("week", selectedWeek)
+        .eq("completed", true);
+      const names = (data ?? []).map((r) => r.session_name).filter(Boolean);
+      setCompletedSessionNames(names);
+    })();
+  }, [profile?.id, selectedWeek]);
+
   async function submitCheckin() {
     setCheckinSubmitting(true);
     const updates = {
@@ -363,6 +353,21 @@ export default function ProgrammePage() {
 
   if (!profile) return null;
   const p = profile;
+
+  const isPro = p.subscription_tier === "pro" || p.subscription_tier === "elite";
+  if (!isPro) {
+    return (
+      <RequireAuth>
+        <OSLayer>
+          <PaywallGate
+            feature="Programme Engine"
+            description="Access your fully periodised training programme, session delivery, and adaptive progression logic."
+            tier="pro"
+          />
+        </OSLayer>
+      </RequireAuth>
+    );
+  }
 
   /* ======================================================
      DERIVED METRICS
@@ -449,14 +454,6 @@ export default function ProgrammePage() {
     experience.includes("advanced") ? "8–9" :
     experience.includes("intermediate") ? "7–8" :
     "6–7";
-
-  function formatIntensityPct(base: number) {
-    if (!p.strength_upper || !p.strength_lower)
-      return `RPE ${rpeTarget}`;
-
-    const scaled = base * intensityScale;
-    return `${Math.round(scaled * 100)}%`;
-  }
 
   /* ======================================================
      CONDITIONING — driven by programme type (from intake goal).
@@ -770,11 +767,6 @@ export default function ProgrammePage() {
     };
   }
 
-  const sessions = Array.from(
-    { length: daysPerWeek },
-    (_, i) => buildSession(i, adaptation)
-  );
-
   /* Programme data from /data/programmes.ts: phase → week → days (unique per week/day) */
   const programmePhase = programme.phases[selectedPhase];
   const phaseWeekIndex = Math.min(Math.max(0, selectedWeek - 1), (programmePhase?.weeks?.length ?? 1) - 1);
@@ -861,28 +853,13 @@ export default function ProgrammePage() {
     window.location.reload();
   }
 
-  const pathname = usePathname();
-
   return (
     <RequireAuth>
-      <OSLayer>
+      <OSLayer hideBottomNav={workoutMode}>
         <div className="outer">
-          <nav className="programmeNav">
-            <div className="programmeBrand">PERFORMANCE PATHFINDER OS</div>
-            <div className="programmeTabs">
-              <NavTab href="/profile" label="Dashboard" pathname={pathname} />
-              <NavTab href="/programme" label="Programme" pathname={pathname} />
-              <NavTab href="/tactical" label="Tactical" pathname={pathname} />
-              <NavTab href="/tactical/input" label="Daily Input" pathname={pathname} />
-              <NavTab href="/tactical/radar" label="Radar" pathname={pathname} />
-              <NavTab href="/tactical/map" label="Readiness Map" pathname={pathname} />
-              <NavTab href="/tactical/command" label="Command Readiness" pathname={pathname} />
-              <NavTab href="/nutrition" label="Nutrition" pathname={pathname} />
-              <NavTab href="/strategy" label="Strategy" pathname={pathname} />
-              <NavTab href="/benchmarks" label="Benchmarks" pathname={pathname} />
-              <NavTab href="/settings" label="Settings" pathname={pathname} />
-            </div>
-          </nav>
+          <div className="desktop-only-nav">
+            <ProgrammeNavBar pathname={pathname} />
+          </div>
 
           <div className="container">
         <div className="header">
@@ -1009,45 +986,105 @@ export default function ProgrammePage() {
           <p className="weekIntroSub">Tap a day to see the full session. Complete your check-in to adapt volume and intensity.</p>
         </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 11, letterSpacing: "0.08em", opacity: 0.7, marginBottom: 8 }}>
+        <div className="phaseSelectorWrap" style={{ marginBottom: 16 }}>
+          <div className="phaseSelectorLabel" style={{ fontSize: 11, letterSpacing: "0.08em", opacity: 0.7, marginBottom: 8 }}>
             PHASE: {programmePhase?.name ?? macrocycle}
-            {programme.phases.length > 1 && (
-              <span style={{ marginLeft: 12 }}>
-                {programme.phases.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setSelectedPhase(i)}
-                    style={{
-                      marginRight: 8,
-                      padding: "4px 10px",
-                      fontSize: 11,
-                      background: selectedPhase === i ? "rgba(47,128,237,0.3)" : "rgba(255,255,255,0.06)",
-                      border: selectedPhase === i ? "1px solid rgba(47,128,237,0.5)" : "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 6,
-                      color: "inherit",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Phase {i + 1}
-                  </button>
-                ))}
-              </span>
-            )}
           </div>
-          <div style={{ fontSize: 13, opacity: 0.85 }}>Duration: {programmePhase?.duration ?? 6} weeks</div>
+          {programme.phases.length > 1 && (
+            <div className="phaseSelectorScroll">
+              {programme.phases.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setSelectedPhase(i)}
+                  className={selectedPhase === i ? "phasePill phasePillActive" : "phasePill"}
+                  aria-pressed={selectedPhase === i}
+                  aria-label={`Phase ${i + 1}`}
+                >
+                  Phase {i + 1}
+                </button>
+              ))}
+            </div>
+          )}
+          <div style={{ fontSize: 13, opacity: 0.85, marginTop: 8 }}>Duration: {programmePhase?.duration ?? 6} weeks</div>
         </div>
         <WeekSelector
           totalWeeks={programmePhase?.duration ?? 6}
           selectedWeek={selectedWeek}
-          onWeekChange={setSelectedWeek}
+          onWeekChange={(w) => { setSelectedWeek(w); setSelectedDayId(null); }}
         />
-        <ProgrammeWeekView
-          weekData={programmeWeekData}
-          expandedDayId={expandedDay}
-          onExpandedDayChange={setExpandedDay}
-        />
+
+        {selectedDayId != null ? (
+          <>
+            <div className="max-w-md mx-auto px-4 w-full">
+              <button
+                type="button"
+                onClick={() => setSelectedDayId(null)}
+                className="h-10 px-4 rounded-lg border border-gray-200 bg-white text-gray-700 font-medium mb-4"
+                aria-label="Back to week"
+              >
+                ← Back to week
+              </button>
+            </div>
+            {(() => {
+              const workoutDayId = (d: ProgrammeDayData, i: number) =>
+                `${d.day.toLowerCase().replace(/\s/g, "-")}-w${programmeWeekData.week}-${i}`;
+              const workoutDay = programmeWeekData.days.find((d, i) => workoutDayId(d, i) === selectedDayId);
+              const workoutExercises = workoutDay
+                ? getFlattenedExercisesFromBlocks(workoutDay.blocks)
+                : [];
+              const workoutSessionTitle = workoutDay?.title;
+              const sessionDuration = workoutDay?.duration ? `~${workoutDay.duration} min` : undefined;
+              const sessionFocus = workoutDay?.type ? `${workoutDay.type} day` : undefined;
+              return (
+                <WorkoutSessionView
+                  exercises={workoutExercises}
+                  sessionTitle={workoutSessionTitle}
+                  sessionDuration={sessionDuration}
+                  sessionFocus={sessionFocus}
+                  unit="kg"
+                  showRpe={false}
+                  onWorkoutModeChange={setWorkoutMode}
+                  onPlayDemo={(exerciseName, demoUrl) => {
+                    const key = exerciseName.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+                    const video = getExerciseVideo(key) ?? (demoUrl ? { videoId: demoUrl.replace(/.*\/([a-zA-Z0-9_-]+).*/, "$1"), label: exerciseName } : null);
+                    if (video) setVideoModal({ videoId: video.videoId, label: video.label, startSeconds: video.startSeconds, endSeconds: video.endSeconds });
+                  }}
+                  onFinishWorkout={() =>
+                    workoutSessionTitle != null
+                      ? completeSession(workoutSessionTitle, workoutSessionTitle)
+                      : undefined
+                  }
+                />
+              );
+            })()}
+          </>
+        ) : (
+          <>
+            <div className="mobile-polish mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">This week</h2>
+              <WeekCalendarView
+                weekData={programmeWeekData}
+                completedSessionNames={completedSessionNames}
+                onDaySelect={(dayId) => setSelectedDayId(dayId)}
+              />
+            </div>
+            <details className="max-w-md mx-auto mb-6 rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+              <summary className="p-4 cursor-pointer text-gray-700 font-medium list-none flex items-center justify-between">
+                <span>Full week detail</span>
+                <span className="text-gray-500 text-sm">expand</span>
+              </summary>
+              <div className="px-4 pb-4 border-t border-gray-100">
+                <ProgrammeWeekView
+                  weekData={programmeWeekData}
+                  expandedDayId={expandedDay}
+                  onExpandedDayChange={setExpandedDay}
+                  onBeginSession={(dayId) => setSelectedDayId(dayId)}
+                />
+              </div>
+            </details>
+          </>
+        )}
 
         {videoModal && (
           <div
@@ -1292,6 +1329,8 @@ export default function ProgrammePage() {
           color: #fff;
           position: relative;
           overflow-x: hidden;
+          width: 100%;
+          max-width: 100vw;
         }
         .outer::before {
           content: "";
@@ -1308,10 +1347,15 @@ export default function ProgrammePage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 20px 40px;
+          padding: 16px;
+          padding-top: max(16px, env(safe-area-inset-top));
+          min-height: calc(54px + env(safe-area-inset-top));
           border-bottom: 1px solid rgba(255,255,255,0.05);
           position: relative;
           z-index: 1;
+        }
+        @media (min-width: 768px) {
+          .programmeNav { padding: 20px 40px; padding-top: max(20px, env(safe-area-inset-top)); }
         }
         .programmeBrand {
           font-size: 12px;
@@ -1323,11 +1367,23 @@ export default function ProgrammePage() {
           gap: 30px;
         }
         .container {
-          max-width: 1200px;
+          max-width: 860px;
           margin: 0 auto;
-          padding: 40px;
+          padding: 16px;
           position: relative;
           z-index: 1;
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+        @media (min-width: 480px) {
+          .container { padding: 20px; }
+        }
+        @media (min-width: 768px) {
+          .container { padding: 24px 40px; }
+        }
+        @media (min-width: 1024px) {
+          .container { padding: 32px 52px; }
         }
 
         .header { margin-bottom:48px; }
@@ -1339,7 +1395,7 @@ export default function ProgrammePage() {
         }
 
         .headline {
-          font-size:28px;
+          font-size: clamp(18px, 5vw, 28px);
           font-weight:700;
           margin:16px 0 8px;
           letter-spacing:-0.02em;
@@ -1348,11 +1404,24 @@ export default function ProgrammePage() {
 
         .meta {
           opacity:0.7;
-          font-size:14px;
+          font-size: 14px;
+          display: block;
+          margin-top: 8px;
+        }
+        @media (max-width: 480px) {
+          .meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 16px;
+            font-size: 14px;
+          }
+        }
+        @media (max-width: 360px) {
+          .meta { grid-template-columns: 1fr; }
         }
 
         .builtFor {
-          font-size:14px;
+          font-size: 14px;
           opacity:0.9;
           margin:8px 0 4px;
         }
@@ -1360,7 +1429,7 @@ export default function ProgrammePage() {
         .builtFor strong { font-weight:600; }
 
         .philosophy {
-          font-size:13px;
+          font-size: 14px;
           opacity:0.8;
           max-width:720px;
           margin:12px 0 16px;
@@ -1368,10 +1437,11 @@ export default function ProgrammePage() {
         }
 
         .markers {
-          font-size:12px;
+          font-size: 12px;
           opacity:0.65;
           margin-top:8px;
         }
+        .markers, .markersLabel, .markersMore { font-size: 12px; }
 
         .markersLabel { opacity:0.85; }
 
@@ -1396,16 +1466,22 @@ export default function ProgrammePage() {
         .dailyCheckinBtn {
           display:inline-flex;
           align-items:center;
+          justify-content:center;
           gap:10px;
-          padding:14px 24px;
+          padding: 12px 16px;
+          min-height: 44px;
+          min-width: 44px;
           background:rgba(47,128,237,0.4);
           border:1px solid rgba(47,128,237,0.7);
           border-radius:12px;
           color:#fff;
           font-weight:600;
-          font-size:15px;
+          font-size: 14px;
           cursor:pointer;
           box-shadow:0 2px 12px rgba(47,128,237,0.25);
+        }
+        @media (min-width: 768px) {
+          .dailyCheckinBtn { padding: 14px 24px; font-size: 15px; }
         }
 
         .dailyCheckinBtn:hover {
@@ -1528,16 +1604,52 @@ export default function ProgrammePage() {
           margin-bottom:28px;
         }
         .weekIntroTitle {
-          font-size:18px;
+          font-size: clamp(18px, 5vw, 28px);
           font-weight:600;
           margin:0 0 8px;
           letter-spacing:-0.01em;
         }
         .weekIntroSub {
-          font-size:14px;
+          font-size: 14px;
           opacity:0.8;
           margin:0;
           line-height:1.5;
+        }
+
+        .phaseSelectorScroll {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          gap: 8px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          padding-bottom: 4px;
+        }
+        .phaseSelectorScroll::-webkit-scrollbar { display: none; }
+        .phasePill {
+          flex-shrink: 0;
+          padding: 10px 18px;
+          min-height: 44px;
+          min-width: 44px;
+          white-space: nowrap;
+          font-size: 13px;
+          font-weight: 500;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 10px;
+          color: inherit;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .phasePillActive {
+          background: rgba(0,201,160,0.2);
+          border-color: #00C9A0;
+          color: #00C9A0;
+          font-weight: 600;
         }
 
         .weekGrid {

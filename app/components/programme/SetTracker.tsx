@@ -20,6 +20,7 @@ export type SetTrackerProps = {
 
 type SetRow = {
   weight: string;
+  reps: string;
   completed: boolean;
   rpe: string;
 };
@@ -29,19 +30,20 @@ function getStorageKey(sessionDate: string, exerciseKey: string): string {
 }
 
 function loadRows(key: string, sets: number): SetRow[] {
-  if (typeof window === "undefined") return Array.from({ length: sets }, () => ({ weight: "", completed: false, rpe: "" }));
+  if (typeof window === "undefined") return Array.from({ length: sets }, () => ({ weight: "", reps: "", completed: false, rpe: "" }));
   try {
     const raw = localStorage.getItem(key);
-    if (!raw) return Array.from({ length: sets }, () => ({ weight: "", completed: false, rpe: "" }));
-    const parsed = JSON.parse(raw) as SetRow[];
+    if (!raw) return Array.from({ length: sets }, () => ({ weight: "", reps: "", completed: false, rpe: "" }));
+    const parsed = JSON.parse(raw) as (SetRow & { reps?: string })[];
     const need = Math.max(0, sets);
     return Array.from({ length: need }, (_, i) => ({
       weight: parsed[i]?.weight ?? "",
+      reps: parsed[i]?.reps ?? "",
       completed: parsed[i]?.completed ?? false,
       rpe: parsed[i]?.rpe ?? "",
     }));
   } catch {
-    return Array.from({ length: sets }, () => ({ weight: "", completed: false, rpe: "" }));
+    return Array.from({ length: sets }, () => ({ weight: "", reps: "", completed: false, rpe: "" }));
   }
 }
 
@@ -57,7 +59,7 @@ export default function SetTracker({
   const storageKey = exerciseKey && dateStr ? getStorageKey(dateStr, exerciseKey) : "";
 
   const [rows, setRows] = useState<SetRow[]>(() =>
-    storageKey ? loadRows(storageKey, Math.max(0, sets)) : Array.from({ length: Math.max(0, sets) }, () => ({ weight: "", completed: false, rpe: "" }))
+    storageKey ? loadRows(storageKey, Math.max(0, sets)) : Array.from({ length: Math.max(0, sets) }, () => ({ weight: "", reps: "", completed: false, rpe: "" }))
   );
 
   useEffect(() => {
@@ -65,7 +67,7 @@ export default function SetTracker({
     setRows((prev) => {
       if (prev.length === next) return prev;
       if (next > prev.length) {
-        return [...prev, ...Array.from({ length: next - prev.length }, () => ({ weight: "", completed: false, rpe: "" }))];
+        return [...prev, ...Array.from({ length: next - prev.length }, () => ({ weight: "", reps: "", completed: false, rpe: "" }))];
       }
       return prev.slice(0, next);
     });
@@ -103,6 +105,14 @@ export default function SetTracker({
     });
   }, []);
 
+  const setReps = useCallback((index: number, value: string) => {
+    setRows((prev) => {
+      const next = [...prev];
+      if (next[index]) next[index] = { ...next[index], reps: value };
+      return next;
+    });
+  }, []);
+
   const setRpe = useCallback((index: number, value: string) => {
     setRows((prev) => {
       const next = [...prev];
@@ -114,101 +124,55 @@ export default function SetTracker({
   if (total === 0) return null;
 
   return (
-    <div
-      style={{
-        marginTop: 16,
-        paddingTop: 14,
-        borderTop: "1px solid rgba(255,255,255,0.06)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 10,
-        }}
-      >
-        {rows.map((row, i) => (
-          <div
-            key={exerciseKey ? `${exerciseKey}-${i}` : i}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "10px 14px",
-              minHeight: 48,
-              background: row.completed ? "rgba(39,224,166,0.12)" : "rgba(255,255,255,0.06)",
-              border: row.completed ? "1px solid rgba(39,224,166,0.3)" : "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 12,
-              flex: "1 1 140px",
-              maxWidth: 220,
-            }}
-          >
-            <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.8, minWidth: 36 }}>Set {i + 1}</span>
+    <div className="setTrackerRoot mt-4 pt-4 border-t border-gray-100 space-y-3">
+      {rows.map((row, i) => (
+        <div
+          key={exerciseKey ? `${exerciseKey}-${i}` : i}
+          className={`flex flex-wrap items-center gap-2 rounded-lg w-full p-3 ${
+            row.completed ? "bg-emerald-50 border border-emerald-200" : "bg-gray-50 border border-gray-100"
+          }`}
+        >
+          <span className="text-sm font-semibold text-gray-700 min-w-[48px]">Set {i + 1}</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="Reps"
+            value={row.reps}
+            onChange={(e) => setReps(i, e.target.value)}
+            className="w-16 h-10 px-2 rounded-lg border border-gray-200 bg-white text-gray-900 text-base text-center"
+            aria-label={`Set ${i + 1} reps`}
+          />
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder={unit}
+            value={row.weight}
+            onChange={(e) => setWeight(i, e.target.value)}
+            className="flex-1 min-w-0 h-10 px-3 rounded-lg border border-gray-200 bg-white text-gray-900 text-base text-center"
+            aria-label={`Set ${i + 1} weight`}
+          />
+          {showRpe && (
             <input
               type="text"
               inputMode="decimal"
-              placeholder={unit}
-              value={row.weight}
-              onChange={(e) => setWeight(i, e.target.value)}
-              style={{
-                flex: 1,
-                minWidth: 0,
-                padding: "8px 10px",
-                background: "rgba(0,0,0,0.2)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 8,
-                color: "#fff",
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-              aria-label={`Set ${i + 1} weight`}
+              placeholder="RPE"
+              value={row.rpe}
+              onChange={(e) => setRpe(i, e.target.value)}
+              className="w-14 h-10 px-2 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm text-center"
+              aria-label={`Set ${i + 1} RPE`}
             />
-            {showRpe && (
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="RPE"
-                value={row.rpe}
-                onChange={(e) => setRpe(i, e.target.value)}
-                style={{
-                  width: 40,
-                  padding: "8px 6px",
-                  background: "rgba(0,0,0,0.2)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 8,
-                  color: "#fff",
-                  fontSize: 12,
-                  textAlign: "center",
-                }}
-                aria-label={`Set ${i + 1} RPE`}
-              />
-            )}
-            <button
-              type="button"
-              onClick={() => setCompleted(i, !row.completed)}
-              aria-label={row.completed ? `Set ${i + 1} completed` : `Mark set ${i + 1} complete`}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                border: "2px solid rgba(255,255,255,0.3)",
-                background: row.completed ? "rgba(39,224,166,0.5)" : "transparent",
-                color: row.completed ? "#fff" : "rgba(255,255,255,0.5)",
-                fontSize: 16,
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                flexShrink: 0,
-              }}
-            >
-              {row.completed ? "✓" : "○"}
-            </button>
-          </div>
-        ))}
-      </div>
+          )}
+          <button
+            type="button"
+            className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-full border-2 cursor-pointer transition-colors border-gray-300 bg-white text-gray-400 hover:border-emerald-400 hover:text-emerald-600"
+            style={row.completed ? { background: "#10b981", borderColor: "#10b981", color: "#fff" } : undefined}
+            onClick={() => setCompleted(i, !row.completed)}
+            aria-label={row.completed ? `Set ${i + 1} completed` : `Mark set ${i + 1} complete`}
+          >
+            {row.completed ? "✓" : "○"}
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

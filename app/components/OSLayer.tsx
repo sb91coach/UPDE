@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import MobileTabBar from "@/app/components/MobileTabBar";
 
 const orbStyle: React.CSSProperties = {
   position: "fixed",
@@ -54,6 +55,7 @@ const panelBodyStyle: React.CSSProperties = {
   flex: 1,
   padding: 20,
   overflowY: "auto",
+  fontSize: 14,
 };
 
 const closeBtnStyle: React.CSSProperties = {
@@ -67,8 +69,11 @@ const closeBtnStyle: React.CSSProperties = {
 
 export default function OSLayer({
   children,
+  hideBottomNav,
 }: {
   children: React.ReactNode;
+  /** When true, hide mobile bottom nav (e.g. during workout mode). */
+  hideBottomNav?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -122,17 +127,20 @@ export default function OSLayer({
         @media (max-width: 768px) {
           .osLayerRoot .osLayerBar {
             padding: 0 16px;
-            flex-wrap: wrap;
-            min-height: 56px;
-            height: auto;
-            padding-top: 12px;
-            padding-bottom: 12px;
+            flex-wrap: nowrap;
+            min-height: 54px;
+            height: calc(54px + env(safe-area-inset-top));
+            padding-top: env(safe-area-inset-top);
           }
           .osLayerRoot .osLayerBarTitle {
             font-size: 11px;
             letter-spacing: 0.08em;
-            width: 100%;
-            margin-bottom: 8px;
+            opacity: 0.8;
+            flex: 1;
+            margin: 0;
+          }
+          .osLayerRoot .desktop-nav-tabs {
+            display: none !important;
           }
           .osLayerRoot .osLayerBarNav {
             gap: 16px;
@@ -140,9 +148,10 @@ export default function OSLayer({
           }
           .osLayerRoot .osLayerContent {
             padding: 20px 16px;
+            padding-bottom: calc(80px + env(safe-area-inset-bottom));
           }
           .osLayerRoot .osLayerFloatingOrb {
-            bottom: 16px !important;
+            bottom: calc(16px + env(safe-area-inset-bottom) + 60px) !important;
             right: 16px !important;
             width: 52px !important;
             height: 52px !important;
@@ -150,29 +159,60 @@ export default function OSLayer({
           }
         }
       `}</style>
-      {/* Top OS Bar */}
+      {/* Top OS Bar — on mobile: logo + app name (left) + avatar/menu (right); no nav tabs */}
       <div className="osLayerBar">
         <div className="osLayerBarTitle" style={{ fontSize: 13, letterSpacing: "0.12em", opacity: 0.6 }}>
           PERFORMANCE PATHFINDER OS
         </div>
-        <div className="osLayerBarNav">
-          <Link href="/profile" style={navBtn}>Dashboard</Link>
-          <button style={navBtn} onClick={toggle}>AI</button>
+        <div className="osLayerBarNav desktop-nav-tabs">
+          <Link href="/profile" style={navBtn}>Home</Link>
+          <Link href="/programme" style={navBtn}>Programme</Link>
+          <Link href="/benchmarks" style={navBtn}>Progress</Link>
+          <Link href="/coach" style={navBtn}>Coach</Link>
+          <Link href="/tactical/input" style={navBtn}>Readiness</Link>
+          <button style={navBtn} onClick={toggle}>AI Coach</button>
           <Link href="/settings" style={navBtn}>Settings</Link>
         </div>
+        <Link
+          href="/settings"
+          className="osLayerBarAvatar"
+          style={{
+            display: "none",
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.1)",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 14,
+            color: "#fff",
+            textDecoration: "none",
+          }}
+          aria-label="Settings / menu"
+        >
+          ⋯
+        </Link>
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .osLayerRoot .osLayerBarAvatar { display: flex !important; }
+        }
+      `}</style>
 
-      {/* Main Content */}
-      <div className="osLayerContent">
+      {/* Main Content — extra padding on mobile for bottom tab bar */}
+      <div className="osLayerContent main-content">
         {children}
       </div>
 
-      {/* Floating Chat System */}
+      {/* Mobile bottom tab bar: hidden during workout mode */}
+      {!hideBottomNav && <MobileTabBar />}
+
+      {/* Floating Chat System — AI Coach */}
       <div ref={panelRef}>
         {open && (
           <div style={panelStyle}>
             <div style={panelHeaderStyle}>
-              <span>Performance AI</span>
+              <span>AI Coach</span>
               <button
                 type="button"
                 style={closeBtnStyle}
@@ -183,9 +223,27 @@ export default function OSLayer({
               </button>
             </div>
             <div style={panelBodyStyle}>
-              <p style={{ margin: 0, opacity: 0.9 }}>
+              <p style={{ margin: "0 0 16px", opacity: 0.9 }}>
                 How can I optimise your performance today?
               </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <section>
+                  <strong style={{ fontSize: 12, letterSpacing: "0.04em", opacity: 0.9 }}>Explain training</strong>
+                  <p style={{ margin: "4px 0 0", fontSize: 13, opacity: 0.85 }}>Ask about any session, exercise, or phase. I can clarify intent and progressions.</p>
+                </section>
+                <section>
+                  <strong style={{ fontSize: 12, letterSpacing: "0.04em", opacity: 0.9 }}>Adjust programmes</strong>
+                  <p style={{ margin: "4px 0 0", fontSize: 13, opacity: 0.85 }}>Request changes to volume, intensity, or exercise selection based on your readiness.</p>
+                </section>
+                <section>
+                  <strong style={{ fontSize: 12, letterSpacing: "0.04em", opacity: 0.9 }}>Interpret readiness</strong>
+                  <p style={{ margin: "4px 0 0", fontSize: 13, opacity: 0.85 }}>I’ll help you understand your readiness score and what to prioritise today.</p>
+                </section>
+                <section>
+                  <strong style={{ fontSize: 12, letterSpacing: "0.04em", opacity: 0.9 }}>Generate reports</strong>
+                  <p style={{ margin: "4px 0 0", fontSize: 13, opacity: 0.85 }}>Request summaries of training history, goal progress, or capacity trends.</p>
+                </section>
+              </div>
             </div>
           </div>
         )}
@@ -195,7 +253,7 @@ export default function OSLayer({
           className="osLayerFloatingOrb"
           style={orbStyle}
           onClick={toggle}
-          aria-label={open ? "Close" : "Open"}
+          aria-label={open ? "Close AI Coach" : "Open AI Coach"}
         >
           {open ? "×" : "✦"}
         </button>

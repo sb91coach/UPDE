@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
-import SessionBlock, { type SessionBlockData, type ExerciseData, getTotalSetsFromBlocks } from "./SessionBlock";
+import { useState, useMemo, useRef, useEffect } from "react";
+import SessionBlock, { type SessionBlockData, getTotalSetsFromBlocks } from "./SessionBlock";
 import SessionProgress from "./SessionProgress";
 import SessionOverview from "./SessionOverview";
 import SessionSummary from "./SessionSummary";
@@ -29,6 +29,8 @@ export type DayAccordionProps = {
   sessionDate?: string;
   unit?: "kg" | "lb";
   showRpe?: boolean;
+  /** When provided, shows a full-width "Begin Session" CTA at bottom of expanded state (mobile-friendly) */
+  onBeginSession?: (dayId: string) => void;
 };
 
 const DAY_INDICATOR: Record<DayType, { char: string; color: string }> = {
@@ -46,6 +48,7 @@ export default function DayAccordion({
   sessionDate: propsSessionDate,
   unit = "kg",
   showRpe = false,
+  onBeginSession,
 }: DayAccordionProps) {
   const indicator = DAY_INDICATOR[day.type] ?? DAY_INDICATOR.Recovery;
   const sessionDate = propsSessionDate ?? (typeof window !== "undefined" ? new Date().toISOString().slice(0, 10) : "");
@@ -57,14 +60,18 @@ export default function DayAccordion({
     [completedByKey]
   );
   const [completionTime, setCompletionTime] = useState<string | null>(null);
-  const completionRecorded = useRef(false);
+  const completionRecordedRef = useRef(false);
 
-  if (totalSets > 0 && completedSets >= totalSets && !completionRecorded.current) {
-    completionRecorded.current = true;
-    const t = new Date();
-    setCompletionTime(t.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }));
-  }
-  if (completedSets < totalSets) completionRecorded.current = false;
+  useEffect(() => {
+    if (totalSets > 0 && completedSets >= totalSets) {
+      if (!completionRecordedRef.current) {
+        completionRecordedRef.current = true;
+        setCompletionTime(new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }));
+      }
+    } else {
+      completionRecordedRef.current = false;
+    }
+  }, [totalSets, completedSets]);
 
   const handleSetCompletionChange = (
     blockIndex: number,
@@ -81,6 +88,7 @@ export default function DayAccordion({
 
   return (
     <div
+      className="dayAccordionRoot"
       style={{
         marginBottom: 10,
         background: "rgba(255,255,255,0.04)",
@@ -95,12 +103,14 @@ export default function DayAccordion({
         aria-expanded={expanded}
         aria-controls={`day-content-${dayId}`}
         id={`day-header-${dayId}`}
+        className="dayAccordionHeader"
         style={{
           width: "100%",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "14px 18px",
+          padding: "14px 16px",
+          minHeight: 56,
           background: "none",
           border: "none",
           color: "inherit",
@@ -110,31 +120,50 @@ export default function DayAccordion({
           textAlign: "left",
         }}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 14 }} aria-hidden>
+        <span style={{ display: "flex", alignItems: "center", gap: 10, flex: "1 1 0", minWidth: 0 }}>
+          <span style={{ fontSize: 14, flexShrink: 0 }} aria-hidden>
             {indicator.char}
           </span>
-          <span>
+          <span style={{ minWidth: 0 }}>
             {day.day} – {day.type} Day
+            {day.duration > 0 && (
+              <span style={{ opacity: 0.75, fontWeight: 400 }}> ({day.duration} min)</span>
+            )}
           </span>
-          {day.duration > 0 && (
-            <span style={{ opacity: 0.75, fontWeight: 400 }}>
-              ({day.duration} min)
-            </span>
-          )}
         </span>
-        <span style={{ fontSize: 12, opacity: 0.8 }} aria-hidden>
+        <span
+          className="dayAccordionChevron"
+          style={{
+            flexShrink: 0,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: 44,
+            minHeight: 44,
+            margin: -8,
+            fontSize: 12,
+            opacity: 0.8,
+          }}
+          aria-hidden
+        >
           {expanded ? "▼" : "▶"}
         </span>
       </button>
 
-      {expanded && (
+      <div
+        id={`day-content-${dayId}`}
+        role="region"
+        aria-labelledby={`day-header-${dayId}`}
+        className="dayAccordionContent"
+        style={{
+          maxHeight: expanded ? 8000 : 0,
+          overflow: "hidden",
+          transition: "max-height 0.3s ease-out",
+        }}
+      >
         <div
-          id={`day-content-${dayId}`}
-          role="region"
-          aria-labelledby={`day-header-${dayId}`}
           style={{
-            padding: "0 18px 18px",
+            padding: "0 16px 18px",
             borderTop: "1px solid rgba(255,255,255,0.06)",
           }}
         >
@@ -170,8 +199,35 @@ export default function DayAccordion({
               completionTime={completionTime ?? undefined}
             />
           )}
+
+          {onBeginSession && (
+            <button
+              type="button"
+              onClick={() => onBeginSession(dayId)}
+              className="dayAccordionBeginBtn"
+              style={{
+                width: "100%",
+                height: 48,
+                marginTop: 16,
+                padding: "0 16px",
+                background: "rgba(0,201,160,0.25)",
+                border: "1px solid #00C9A0",
+                borderRadius: 12,
+                color: "#00C9A0",
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              Begin Session →
+            </button>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

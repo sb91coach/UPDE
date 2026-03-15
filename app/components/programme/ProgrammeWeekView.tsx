@@ -18,12 +18,15 @@ export type ProgrammeWeekViewProps = {
   onExpandedDayChange?: (dayId: string | null) => void;
   /** Optional: controlled expanded day id (e.g. "monday-1"). If not provided, internal state is used. */
   expandedDayId?: string | null;
+  /** When provided, each day accordion shows a "Begin Session" CTA that calls this with the dayId */
+  onBeginSession?: (dayId: string) => void;
 };
 
 export default function ProgrammeWeekView({
   weekData,
   onExpandedDayChange,
   expandedDayId: controlledExpandedId,
+  onBeginSession,
 }: ProgrammeWeekViewProps) {
   const [internalExpanded, setInternalExpanded] = useState<string | null>(null);
 
@@ -60,6 +63,7 @@ export default function ProgrammeWeekView({
             dayId={dayId}
             expanded={expandedDay === dayId}
             onToggle={() => handleToggle(dayId)}
+            onBeginSession={onBeginSession}
           />
         );
       })}

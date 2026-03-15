@@ -122,9 +122,6 @@ export default function TacticalInputPage() {
     setTimeout(() => setSaved(false), 2500);
   }
 
-  const sectionClass = "tacticalInputSection";
-  const labelClass = "tacticalLabel";
-
   return (
     <RequireAuth>
       <OSLayer>
@@ -146,42 +143,42 @@ export default function TacticalInputPage() {
             </div>
           </nav>
 
-          <div className="tacticalContainer">
-            <div className="tacticalHeader">
-              <div className="tacticalPhase">TACTICAL</div>
-              <h1 className="tacticalHeadline">Daily Readiness Input</h1>
-              <p className="tacticalSub">Log recovery, structural, capacity and exposure. All data is stored per ID.</p>
-              <Link href="/tactical" className="tacticalBackLink">← Back to Tactical Dashboard</Link>
+          <div className="tacticalContainer mobile-polish">
+            <div className="space-y-2 mb-6">
+              <p className="text-sm text-gray-500 uppercase tracking-wider">Tactical</p>
+              <h1 className="text-xl font-semibold text-gray-900">Daily Readiness Input</h1>
+              <p className="text-sm text-gray-500">Log recovery, structural, capacity and exposure. All data is stored per ID.</p>
+              <Link href="/tactical" className="text-sm text-blue-600 hover:underline mt-2 inline-block">← Back to Tactical Dashboard</Link>
             </div>
 
             {/* SECTION 1 — ID MANAGEMENT */}
-            <section className={`${sectionClass} idManagementPanel`}>
-              <h2 className="tacticalSectionTitle">ID Management</h2>
-              <div className="idManagementRow">
-                <div className="idSelectWrap">
-                  <label className={labelClass}>Select ID</label>
+            <section className="polish-card rounded-2xl p-5 space-y-3 mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">ID Management</h2>
+              <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
+                <div className="flex flex-col gap-2 flex-1">
+                  <label className="text-sm text-gray-500">Select ID</label>
                   <select
                     value={selectedId}
                     onChange={(e) => setSelectedId(e.target.value)}
-                    className="idSelect"
+                    className="h-10 rounded-lg border border-gray-200 bg-white text-gray-900 px-3 min-w-[140px]"
                   >
                     {idList.map((id) => (
                       <option key={id} value={id}>{id}</option>
                     ))}
                   </select>
                 </div>
-                <button type="button" className="addIdBtn" onClick={() => setModalOpen(true)}>
+                <button type="button" className="h-10 px-4 rounded-lg border border-gray-200 bg-white text-gray-700 font-medium" onClick={() => setModalOpen(true)}>
                   Add New ID
                 </button>
               </div>
             </section>
 
             {/* SECTION 2 — RECOVERY INPUTS */}
-            <section className={sectionClass}>
-              <h2 className="tacticalSectionTitle">Recovery Inputs</h2>
-              <div className="tacticalInputGrid">
-                <label className="tacticalField">
-                  <span className={labelClass}>sleep_hours</span>
+            <section className="polish-card rounded-2xl p-5 space-y-4 mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Recovery Inputs</h2>
+              <div className="grid grid-cols-1 gap-4">
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-500">sleep_hours</span>
                   <input
                     type="number"
                     min={0}
@@ -189,58 +186,58 @@ export default function TacticalInputPage() {
                     step={0.5}
                     value={form.sleep_hours}
                     onChange={(e) => update("sleep_hours", parseFloat(e.target.value) || 0)}
-                    className="tacticalInput numInput"
+                    className="h-10 rounded-lg border border-gray-200 bg-white text-gray-900 text-center max-w-[120px]"
                   />
                 </label>
-                <label className="tacticalField sliderField">
-                  <span className={labelClass}>sleep_quality (1–5)</span>
-                  <div className="sliderRow">
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-500">sleep_quality (1–5)</span>
+                  <div className="flex items-center gap-3">
                     <input type="range" min={1} max={5} value={form.sleep_quality}
-                      onChange={(e) => update("sleep_quality", parseInt(e.target.value, 10))} className="glowSlider" />
-                    <span className="liveVal">{form.sleep_quality}</span>
+                      onChange={(e) => update("sleep_quality", parseInt(e.target.value, 10))} className="rangeSlider flex-1 max-w-[200px]" />
+                    <span className="text-sm font-semibold text-gray-700 w-8">{form.sleep_quality}</span>
                   </div>
                 </label>
-                <label className="tacticalField sliderField">
-                  <span className={labelClass}>fatigue_level (1–5)</span>
-                  <div className="sliderRow">
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-500">fatigue_level (1–5)</span>
+                  <div className="flex items-center gap-3">
                     <input type="range" min={1} max={5} value={form.fatigue_level}
-                      onChange={(e) => update("fatigue_level", parseInt(e.target.value, 10))} className="glowSlider" />
-                    <span className="liveVal">{form.fatigue_level}</span>
+                      onChange={(e) => update("fatigue_level", parseInt(e.target.value, 10))} className="rangeSlider flex-1 max-w-[200px]" />
+                    <span className="text-sm font-semibold text-gray-700 w-8">{form.fatigue_level}</span>
                   </div>
                 </label>
-                <label className="tacticalField sliderField">
-                  <span className={labelClass}>stress_level (1–5)</span>
-                  <div className="sliderRow">
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-500">stress_level (1–5)</span>
+                  <div className="flex items-center gap-3">
                     <input type="range" min={1} max={5} value={form.stress_level}
-                      onChange={(e) => update("stress_level", parseInt(e.target.value, 10))} className="glowSlider" />
-                    <span className="liveVal">{form.stress_level}</span>
+                      onChange={(e) => update("stress_level", parseInt(e.target.value, 10))} className="rangeSlider flex-1 max-w-[200px]" />
+                    <span className="text-sm font-semibold text-gray-700 w-8">{form.stress_level}</span>
                   </div>
                 </label>
               </div>
             </section>
 
             {/* SECTION 3 — STRUCTURAL INTEGRITY */}
-            <section className={sectionClass}>
-              <h2 className="tacticalSectionTitle">Structural Integrity Inputs</h2>
-              <p className="tacticalSectionSub">Pain scale 0–10</p>
-              <div className="tacticalInputGrid">
+            <section className="polish-card rounded-2xl p-5 space-y-4 mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Structural Integrity Inputs</h2>
+              <p className="text-sm text-gray-500">Pain scale 0–10</p>
+              <div className="grid grid-cols-1 gap-4">
                 {(["knee_pain", "back_pain", "shin_pain", "shoulder_pain", "hip_pain", "ankle_pain", "elbow_pain", "neck_pain"] as const).map((key) => (
-                  <label key={key} className="tacticalField sliderField">
-                    <span className={labelClass}>{key.replace(/_/g, " ")}</span>
-                    <div className="sliderRow">
+                  <label key={key} className="flex flex-col gap-2">
+                    <span className="text-sm text-gray-500">{key.replace(/_/g, " ")}</span>
+                    <div className="flex items-center gap-3">
                       <input type="range" min={0} max={10} value={form[key]}
-                        onChange={(e) => update(key, parseInt(e.target.value, 10))} className="glowSlider" />
-                      <span className="liveVal">{form[key]}</span>
+                        onChange={(e) => update(key, parseInt(e.target.value, 10))} className="rangeSlider flex-1 max-w-[200px]" />
+                      <span className="text-sm font-semibold text-gray-700 w-8">{form[key]}</span>
                     </div>
                   </label>
                 ))}
                 {(["muscle_tightness", "joint_stiffness", "tendon_irritation", "movement_restriction"] as const).map((key) => (
-                  <label key={key} className="tacticalField sliderField">
-                    <span className={labelClass}>{key.replace(/_/g, " ")}</span>
-                    <div className="sliderRow">
+                  <label key={key} className="flex flex-col gap-2">
+                    <span className="text-sm text-gray-500">{key.replace(/_/g, " ")}</span>
+                    <div className="flex items-center gap-3">
                       <input type="range" min={0} max={10} value={form[key]}
-                        onChange={(e) => update(key, parseInt(e.target.value, 10))} className="glowSlider" />
-                      <span className="liveVal">{form[key]}</span>
+                        onChange={(e) => update(key, parseInt(e.target.value, 10))} className="rangeSlider flex-1 max-w-[200px]" />
+                      <span className="text-sm font-semibold text-gray-700 w-8">{form[key]}</span>
                     </div>
                   </label>
                 ))}
@@ -248,67 +245,67 @@ export default function TacticalInputPage() {
             </section>
 
             {/* SECTION 4 — PERFORMANCE CAPACITY */}
-            <section className={sectionClass}>
-              <h2 className="tacticalSectionTitle">Performance Capacity Inputs</h2>
-              <p className="tacticalSectionSub">Elite performance markers 0–100</p>
-              <div className="tacticalInputGrid">
+            <section className="polish-card rounded-2xl p-5 space-y-4 mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Performance Capacity Inputs</h2>
+              <p className="text-sm text-gray-500">Elite performance markers 0–100</p>
+              <div className="grid grid-cols-1 gap-4">
                 {(["strength_index", "explosive_power", "neuromuscular_readiness", "aerobic_capacity", "movement_durability", "coordination_quality"] as const).map((key) => (
-                  <label key={key} className="tacticalField sliderField">
-                    <span className={labelClass}>{key.replace(/_/g, " ")}</span>
-                    <div className="sliderRow">
+                  <label key={key} className="flex flex-col gap-2">
+                    <span className="text-sm text-gray-500">{key.replace(/_/g, " ")}</span>
+                    <div className="flex items-center gap-3">
                       <input type="range" min={0} max={100} value={form[key]}
-                        onChange={(e) => update(key, parseInt(e.target.value, 10))} className="glowSlider" />
-                      <span className="liveVal">{form[key]}</span>
+                        onChange={(e) => update(key, parseInt(e.target.value, 10))} className="rangeSlider flex-1 max-w-[200px]" />
+                      <span className="text-sm font-semibold text-gray-700 w-10">{form[key]}</span>
                     </div>
                   </label>
                 ))}
-                <label className="tacticalField sliderField">
-                  <span className={labelClass}>neuromuscular_fatigue (0–10)</span>
-                  <div className="sliderRow">
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-500">neuromuscular_fatigue (0–10)</span>
+                  <div className="flex items-center gap-3">
                     <input type="range" min={0} max={10} value={form.neuromuscular_fatigue}
-                      onChange={(e) => update("neuromuscular_fatigue", parseInt(e.target.value, 10))} className="glowSlider" />
-                    <span className="liveVal">{form.neuromuscular_fatigue}</span>
+                      onChange={(e) => update("neuromuscular_fatigue", parseInt(e.target.value, 10))} className="rangeSlider flex-1 max-w-[200px]" />
+                    <span className="text-sm font-semibold text-gray-700 w-8">{form.neuromuscular_fatigue}</span>
                   </div>
                 </label>
-                <label className="tacticalField sliderField">
-                  <span className={labelClass}>central_fatigue (0–10)</span>
-                  <div className="sliderRow">
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-500">central_fatigue (0–10)</span>
+                  <div className="flex items-center gap-3">
                     <input type="range" min={0} max={10} value={form.central_fatigue}
-                      onChange={(e) => update("central_fatigue", parseInt(e.target.value, 10))} className="glowSlider" />
-                    <span className="liveVal">{form.central_fatigue}</span>
+                      onChange={(e) => update("central_fatigue", parseInt(e.target.value, 10))} className="rangeSlider flex-1 max-w-[200px]" />
+                    <span className="text-sm font-semibold text-gray-700 w-8">{form.central_fatigue}</span>
                   </div>
                 </label>
               </div>
             </section>
 
             {/* SECTION 5 — EXPOSURE */}
-            <section className={sectionClass}>
-              <h2 className="tacticalSectionTitle">Exposure Inputs</h2>
-              <div className="tacticalInputGrid">
-                <label className="tacticalField sliderField">
-                  <span className={labelClass}>training_load (1–10)</span>
-                  <div className="sliderRow">
+            <section className="polish-card rounded-2xl p-5 space-y-4 mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Exposure Inputs</h2>
+              <div className="grid grid-cols-1 gap-4">
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-500">training_load (1–10)</span>
+                  <div className="flex items-center gap-3">
                     <input type="range" min={1} max={10} value={form.training_load}
-                      onChange={(e) => update("training_load", parseInt(e.target.value, 10))} className="glowSlider" />
-                    <span className="liveVal">{form.training_load}</span>
+                      onChange={(e) => update("training_load", parseInt(e.target.value, 10))} className="rangeSlider flex-1 max-w-[200px]" />
+                    <span className="text-sm font-semibold text-gray-700 w-8">{form.training_load}</span>
                   </div>
                 </label>
-                <label className="tacticalField">
-                  <span className={labelClass}>operational_hours</span>
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-500">operational_hours</span>
                   <input type="number" min={0} max={24} value={form.operational_hours}
-                    onChange={(e) => update("operational_hours", parseInt(e.target.value, 10) || 0)} className="tacticalInput numInput" />
+                    onChange={(e) => update("operational_hours", parseInt(e.target.value, 10) || 0)} className="h-10 rounded-lg border border-gray-200 bg-white text-gray-900 text-center max-w-[120px]" />
                 </label>
-                <label className="tacticalField toggleField">
-                  <span className={labelClass}>high_intensity_exposure</span>
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-500">high_intensity_exposure</span>
                   <button type="button" role="switch" aria-checked={form.high_intensity_exposure}
-                    className={`tacticalToggle ${form.high_intensity_exposure ? "on" : ""}`}
+                    className={`h-10 px-4 rounded-lg border font-medium w-fit min-w-[44px] ${form.high_intensity_exposure ? "bg-blue-600 border-blue-600 text-white" : "bg-white border-gray-200 text-gray-700"}`}
                     onClick={() => update("high_intensity_exposure", !form.high_intensity_exposure)}>
                     {form.high_intensity_exposure ? "Yes" : "No"}
                   </button>
                 </label>
-                <label className="tacticalField">
-                  <span className={labelClass}>external_workload</span>
-                  <select value={form.external_workload} onChange={(e) => update("external_workload", e.target.value as "light" | "moderate" | "heavy")} className="idSelect workloadSelect">
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-500">external_workload</span>
+                  <select value={form.external_workload} onChange={(e) => update("external_workload", e.target.value as "light" | "moderate" | "heavy")} className="h-10 rounded-lg border border-gray-200 bg-white text-gray-900 px-3 min-w-[140px]">
                     <option value="light">light</option>
                     <option value="moderate">moderate</option>
                     <option value="heavy">heavy</option>
@@ -318,16 +315,16 @@ export default function TacticalInputPage() {
             </section>
 
             {/* SECTION 6 – SAVE */}
-            <section className={`${sectionClass} saveSection`}>
+            <section className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <button
                 type="button"
-                className="saveEntryBtn"
+                className="h-12 w-full rounded-xl font-medium bg-blue-600 text-white disabled:opacity-70"
                 onClick={handleSave}
                 disabled={saved}
               >
                 {saved ? "Saved" : "Save Readiness Entry"}
               </button>
-              {entries.length > 0 && <span className="entryCount">{entries.length} entries in log</span>}
+              {entries.length > 0 && <span className="text-sm text-gray-500">{entries.length} entries in log</span>}
             </section>
           </div>
 
@@ -335,14 +332,14 @@ export default function TacticalInputPage() {
           {modalOpen && (
             <div className="modalOverlay" onClick={() => setModalOpen(false)}>
               <div className="modalGlass" onClick={(e) => e.stopPropagation()}>
-                <h3 className="modalTitle">Add New ID</h3>
-                <label className={labelClass}>ID Number</label>
-                <p className="modalHint">e.g. 11 → creates ID 11</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New ID</h3>
+                <label className="text-sm text-gray-500 block mb-1">ID Number</label>
+                <p className="text-sm text-gray-500 mb-2">e.g. 11 → creates ID 11</p>
                 <input type="number" min={1} value={newIdInput} onChange={(e) => setNewIdInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addNewId()} className="tacticalInput modalInput" placeholder="11" />
-                <div className="modalActions">
-                  <button type="button" className="modalBtn secondary" onClick={() => setModalOpen(false)}>Cancel</button>
-                  <button type="button" className="modalBtn primary" onClick={addNewId}>Add ID</button>
+                  onKeyDown={(e) => e.key === "Enter" && addNewId()} className="h-10 w-full rounded-lg border border-gray-200 bg-white text-gray-900 px-3 mb-4" placeholder="11" />
+                <div className="flex gap-3 mt-4">
+                  <button type="button" className="h-10 px-4 rounded-lg border border-gray-200 bg-white text-gray-700 font-medium flex-1" onClick={() => setModalOpen(false)}>Cancel</button>
+                  <button type="button" className="h-10 px-4 rounded-lg bg-blue-600 text-white font-medium flex-1" onClick={addNewId}>Add ID</button>
                 </div>
               </div>
             </div>
@@ -351,161 +348,28 @@ export default function TacticalInputPage() {
           <style jsx>{`
             .tacticalOuter {
               min-height: 100vh;
-              background: #08090c;
-              background-image:
-                radial-gradient(ellipse 80% 50% at 20% 20%, rgba(47,128,237,0.14), transparent),
-                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(39,224,166,0.08), transparent),
-                linear-gradient(180deg, #08090c 0%, #0c0e12 50%, #08090c 100%);
-              color: #fff;
+              background: #f9fafb;
               position: relative;
               overflow-x: hidden;
-            }
-            .tacticalOuter::before {
-              content: "";
-              position: absolute;
-              inset: 0;
-              background:
-                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-              background-size: 40px 40px;
-              opacity: 0.35;
-              pointer-events: none;
             }
             .tacticalNav {
               display: flex;
               justify-content: space-between;
               align-items: center;
-              padding: 20px 40px;
-              border-bottom: 1px solid rgba(255,255,255,0.06);
+              padding: 16px 20px;
+              border-bottom: 1px solid #e5e7eb;
+              background: #fff;
               position: relative;
               z-index: 2;
             }
-            .tacticalBrand { font-size: 12px; letter-spacing: 2px; opacity: 0.7; }
-            .tacticalTabs { display: flex; gap: 20px; flex-wrap: wrap; }
-            .tacticalContainer { max-width: 820px; margin: 0 auto; padding: 40px; position: relative; z-index: 1; }
-            .tacticalHeader { margin-bottom: 36px; }
-            .tacticalPhase { font-size: 11px; letter-spacing: 0.12em; opacity: 0.6; margin-bottom: 8px; }
-            .tacticalHeadline { font-size: 26px; font-weight: 600; margin: 0 0 10px; }
-            .tacticalSub { font-size: 14px; opacity: 0.8; margin: 0 0 14px; line-height: 1.5; }
-            .tacticalBackLink { font-size: 13px; color: rgba(47,128,237,0.95); text-decoration: none; }
-            .tacticalBackLink:hover { text-decoration: underline; }
-            .tacticalInputSection {
-              margin-bottom: 32px;
-              padding: 24px;
-              background: rgba(255,255,255,0.03);
-              border: 1px solid rgba(255,255,255,0.08);
-              border-radius: 14px;
-              box-shadow: 0 0 30px rgba(47,128,237,0.06);
-              backdrop-filter: blur(8px);
-            }
-            .idManagementPanel { border-color: rgba(39,224,166,0.2); box-shadow: 0 0 24px rgba(39,224,166,0.08); }
-            .tacticalSectionTitle { font-size: 15px; font-weight: 600; margin: 0 0 6px; letter-spacing: 0.03em; }
-            .tacticalSectionSub { font-size: 12px; opacity: 0.7; margin: 0 0 16px; }
-            .idManagementRow { display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
-            .idSelectWrap { display: flex; flex-direction: column; gap: 8px; }
-            .idSelect, .workloadSelect {
-              padding: 12px 16px;
-              background: rgba(255,255,255,0.06);
-              border: 1px solid rgba(47,128,237,0.35);
-              border-radius: 10px;
-              color: #fff;
-              font-size: 14px;
-              min-width: 140px;
-              box-shadow: 0 0 16px rgba(47,128,237,0.15);
-            }
-            .idSelect:focus, .workloadSelect:focus { outline: none; border-color: rgba(47,128,237,0.6); box-shadow: 0 0 20px rgba(47,128,237,0.25); }
-            .addIdBtn {
-              padding: 12px 24px;
-              font-size: 14px; font-weight: 600;
-              background: linear-gradient(135deg, rgba(39,224,166,0.25), rgba(47,128,237,0.2));
-              border: 1px solid rgba(39,224,166,0.5);
-              border-radius: 10px;
-              color: #fff;
-              cursor: pointer;
-              transition: box-shadow 0.2s, transform 0.2s;
-            }
-            .addIdBtn:hover { box-shadow: 0 0 24px rgba(39,224,166,0.35); transform: translateY(-1px); }
-            .tacticalInputGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
-            .tacticalField { display: flex; flex-direction: column; gap: 8px; }
-            .tacticalLabel { font-size: 13px; opacity: 0.92; }
-            .tacticalInput.numInput {
-              padding: 12px 14px;
-              background: rgba(255,255,255,0.06);
-              border: 1px solid rgba(255,255,255,0.12);
-              border-radius: 10px;
-              color: #fff;
-              font-size: 14px;
-              max-width: 120px;
-            }
-            .tacticalInput:focus { outline: none; border-color: rgba(47,128,237,0.5); box-shadow: 0 0 0 2px rgba(47,128,237,0.2); }
-            .sliderField .sliderRow { display: flex; align-items: center; gap: 12px; }
-            .glowSlider {
-              flex: 1;
-              max-width: 200px;
-              height: 8px;
-              -webkit-appearance: none;
-              appearance: none;
-              background: linear-gradient(90deg, rgba(47,128,237,0.3), rgba(39,224,166,0.3));
-              border-radius: 4px;
-              box-shadow: 0 0 12px rgba(47,128,237,0.25), inset 0 0 8px rgba(0,0,0,0.2);
-            }
-            .glowSlider::-webkit-slider-thumb {
-              -webkit-appearance: none;
-              width: 20px; height: 20px;
-              border-radius: 50%;
-              background: linear-gradient(135deg, #2F80ED, #27E0A6);
-              box-shadow: 0 0 16px rgba(47,128,237,0.6), 0 0 8px rgba(39,224,166,0.4);
-              cursor: pointer;
-              transition: transform 0.2s, box-shadow 0.2s;
-            }
-            .glowSlider::-webkit-slider-thumb:hover { transform: scale(1.1); box-shadow: 0 0 24px rgba(47,128,237,0.8); }
-            .glowSlider::-moz-range-thumb {
-              width: 20px; height: 20px;
-              border-radius: 50%;
-              background: linear-gradient(135deg, #2F80ED, #27E0A6);
-              box-shadow: 0 0 16px rgba(47,128,237,0.6);
-              cursor: pointer;
-              border: none;
-            }
-            .liveVal { font-size: 14px; font-weight: 700; min-width: 28px; color: rgba(39,224,166,0.95); text-shadow: 0 0 12px rgba(39,224,166,0.5); }
-            .toggleField { flex-direction: row; align-items: center; flex-wrap: wrap; }
-            .tacticalToggle {
-              padding: 10px 20px;
-              font-size: 13px; font-weight: 500;
-              background: rgba(255,255,255,0.08);
-              border: 1px solid rgba(255,255,255,0.15);
-              border-radius: 10px;
-              color: rgba(255,255,255,0.85);
-              cursor: pointer;
-              transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
-            }
-            .tacticalToggle:hover { background: rgba(255,255,255,0.1); }
-            .tacticalToggle.on {
-              background: rgba(47,128,237,0.25);
-              border-color: rgba(47,128,237,0.5);
-              color: #fff;
-              box-shadow: 0 0 20px rgba(47,128,237,0.3);
-            }
-            .saveSection { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
-            .saveEntryBtn {
-              padding: 16px 32px;
-              font-size: 16px; font-weight: 600;
-              background: linear-gradient(135deg, rgba(47,128,237,0.45), rgba(39,224,166,0.25));
-              border: 1px solid rgba(47,128,237,0.55);
-              border-radius: 12px;
-              color: #fff;
-              cursor: pointer;
-              transition: opacity 0.2s, box-shadow 0.2s, transform 0.2s;
-              box-shadow: 0 0 28px rgba(47,128,237,0.25);
-            }
-            .saveEntryBtn:hover:not(:disabled) { box-shadow: 0 0 36px rgba(47,128,237,0.4); transform: translateY(-1px); }
-            .saveEntryBtn:disabled { opacity: 0.85; cursor: default; }
-            .entryCount { font-size: 13px; opacity: 0.75; }
+            .tacticalBrand { font-size: 12px; letter-spacing: 0.05em; color: #374151; }
+            .tacticalTabs { display: flex; gap: 16px; flex-wrap: wrap; }
+            .tacticalContainer { position: relative; z-index: 1; }
             .modalOverlay {
               position: fixed;
               inset: 0;
-              background: rgba(0,0,0,0.7);
-              backdrop-filter: blur(6px);
+              background: rgba(0,0,0,0.5);
+              backdrop-filter: blur(4px);
               display: flex;
               align-items: center;
               justify-content: center;
@@ -513,30 +377,20 @@ export default function TacticalInputPage() {
               animation: fadeIn 0.2s ease;
             }
             .modalGlass {
-              padding: 28px;
-              background: rgba(12,14,18,0.95);
-              border: 1px solid rgba(47,128,237,0.3);
-              border-radius: 16px;
-              box-shadow: 0 0 40px rgba(47,128,237,0.2), inset 0 0 20px rgba(255,255,255,0.02);
+              padding: 1.5rem;
+              background: #fff;
+              border: 1px solid #e5e7eb;
+              border-radius: 1rem;
+              box-shadow: 0 10px 40px rgba(0,0,0,0.12);
               min-width: 280px;
+              max-width: 90vw;
               animation: scaleIn 0.25s ease;
             }
-            .modalTitle { font-size: 18px; font-weight: 600; margin: 0 0 16px; }
-            .modalHint { font-size: 12px; opacity: 0.7; margin: 0 0 8px; }
-            .modalInput { max-width: 100%; }
-            .modalActions { display: flex; gap: 12px; margin-top: 20px; }
-            .modalBtn { padding: 10px 20px; font-size: 14px; font-weight: 500; border-radius: 10px; cursor: pointer; transition: opacity 0.2s; }
-            .modalBtn.secondary { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; }
-            .modalBtn.primary { background: linear-gradient(135deg, rgba(47,128,237,0.5), rgba(39,224,166,0.3)); border: 1px solid rgba(47,128,237,0.5); color: #fff; }
-            .modalBtn.primary:hover { opacity: 0.95; }
             @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
             @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
             @media (max-width: 768px) {
-              .tacticalNav { padding: 16px; }
-              .tacticalTabs { gap: 14px; }
-              .tacticalContainer { padding: 16px; }
-              .tacticalInputGrid { grid-template-columns: 1fr; }
-              .idManagementRow { flex-direction: column; align-items: stretch; }
+              .tacticalNav { padding: 12px 16px; }
+              .tacticalTabs { gap: 12px; }
             }
           `}</style>
         </div>

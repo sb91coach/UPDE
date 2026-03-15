@@ -17,7 +17,8 @@ export async function POST() {
     .maybeSingle();
 
   const current = (profile?.user_preferences as Record<string, unknown>) ?? {};
-  const { garmin_user_id: _, ...rest } = current;
+  const rest = { ...current };
+  delete (rest as Record<string, unknown>).garmin_user_id;
   const next = { ...rest, garmin_connected: false };
 
   const { error } = await supabase

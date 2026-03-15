@@ -66,6 +66,7 @@ export default function RestTimer({ rest, label = "Rest" }: RestTimerProps) {
 
   return (
     <div
+      className={`restTimerRoot ${running ? "restTimerFloating" : ""}`}
       style={{
         marginTop: 14,
         padding: "14px 16px",
@@ -86,6 +87,7 @@ export default function RestTimer({ rest, label = "Rest" }: RestTimerProps) {
         type="button"
         onClick={start}
         disabled={running}
+        className="min-h-[44px] min-w-[44px]"
         style={{
           padding: "10px 18px",
           fontSize: 13,
@@ -95,7 +97,6 @@ export default function RestTimer({ rest, label = "Rest" }: RestTimerProps) {
           borderRadius: 10,
           color: "#fff",
           cursor: running ? "default" : "pointer",
-          minHeight: 44,
         }}
       >
         {running ? "Resting…" : "Start Rest"}

@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
  * If GARMIN_CONSUMER_KEY and GARMIN_CONSUMER_SECRET are set, redirect to Garmin OAuth.
  * Otherwise, for demo/development, we can set garmin_connected in user_preferences (optional).
  */
-export async function POST(req: Request) {
+export async function POST(_req: Request) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
