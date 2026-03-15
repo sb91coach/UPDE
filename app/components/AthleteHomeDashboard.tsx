@@ -12,21 +12,181 @@ type TodaySession = {
   detail: string;
 };
 
-function readinessLabel(score: number): string {
-  if (score >= 75) return "Good to train";
-  if (score >= 55) return "Moderate – consider reducing load";
-  return "Recovery recommended";
+type SessionsThisWeek = {
+  completed: number;
+  planned: number;
+};
+
+type ProfileData = {
+  name?: string | null;
+  readiness_score?: number | null;
+  checkin_readiness?: number | null;
+  checkin_date?: string | null;
+  aerobic_score?: number | null;
+  sleep_score?: number | null;
+  strength_upper?: number | null;
+  strength_lower?: number | null;
+  mobility_score?: number | null;
+  fatigue_score?: number | null;
+  momentum?: number | string | null;
+  primary_limiter?: string | null;
+  archetype?: string | null;
+  deload_active?: boolean | null;
+  completed_sessions?: number | null;
+  current_week?: number | null;
+  focus?: string | null;
+};
+
+const CARD_STYLE: React.CSSProperties = {
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(255,255,255,0.07)",
+  borderRadius: 20,
+  padding: 20,
+};
+
+const LABEL_STYLE: React.CSSProperties = {
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: "rgba(238,240,244,0.28)",
+  marginBottom: 12,
+};
+
+function getReadinessScore(profile: ProfileData | null): number {
+  if (!profile) return 70;
+  const today = new Date().toISOString().slice(0, 10);
+  const useCheckin = profile.checkin_date === today;
+  const raw = useCheckin
+    ? profile.checkin_readiness ?? profile.readiness_score ?? 70
+    : profile.readiness_score ?? 70;
+  return typeof raw === "number" ? raw : 70;
 }
 
-function readinessDotColor(score: number): string {
+function readinessColor(score: number): string {
   if (score >= 75) return "#00c9a0";
   if (score >= 55) return "#f59e0b";
   return "#f04e37";
 }
 
+function readinessTag(score: number): string {
+  if (score >= 75) return "GREEN";
+  if (score >= 55) return "AMBER";
+  return "RED";
+}
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function getDateLabel(): string {
+  return new Date().toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+  });
+}
+
+function getWeekTrend(readiness: number): number[] {
+  const todayIndex = (() => {
+    const d = new Date().getDay();
+    return d === 0 ? 6 : d - 1;
+  })();
+  return Array.from({ length: 7 }, (_, i) => {
+    const delta = (i - todayIndex) * 6 + (i % 2 === 0 ? 5 : -5);
+    return Math.min(100, Math.max(0, Math.round(readiness + delta)));
+  });
+}
+
+function getExercisesForSession(sessionTitle: string): { name: string; sets: string }[] {
+  const t = sessionTitle.toLowerCase();
+  if (t.includes("upper")) {
+    return [
+      { name: "Bench Press", sets: "3–4" },
+      { name: "Pull-up", sets: "3–4" },
+      { name: "Row", sets: "3–4" },
+      { name: "OHP", sets: "3–4" },
+    ];
+  }
+  if (t.includes("power") || t.includes("rfd")) {
+    return [
+      { name: "Hang Clean", sets: "3–4" },
+      { name: "Box Jump", sets: "3–4" },
+      { name: "Front Squat", sets: "3–4" },
+      { name: "Nordic", sets: "3" },
+    ];
+  }
+  if (t.includes("regeneration")) {
+    return [
+      { name: "Zone 1", sets: "1" },
+      { name: "Mobility", sets: "1" },
+      { name: "Breathing", sets: "1" },
+    ];
+  }
+  return [
+    { name: "Squat", sets: "3–4" },
+    { name: "RDL", sets: "3–4" },
+    { name: "Split Squat", sets: "3–4" },
+    { name: "Leg Press", sets: "3–4" },
+  ];
+}
+
+function ReadinessRing({ score, color }: { score: number; color: string }) {
+  const r = 42;
+  const circumference = 2 * Math.PI * r;
+  const fill = (score / 100) * circumference;
+  return (
+    <div style={{ position: "relative", width: 100, height: 100 }}>
+      <svg width={100} height={100} viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
+        <circle
+          cx={50}
+          cy={50}
+          r={r}
+          fill="none"
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth={8}
+        />
+        <circle
+          cx={50}
+          cy={50}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={8}
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference - fill}
+          strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 0.4s ease" }}
+        />
+      </svg>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <span style={{ fontSize: 24, fontWeight: 800, color: "rgba(238,240,244,0.95)" }}>
+          {Math.round(score)}
+        </span>
+        <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", color: "rgba(238,240,244,0.28)" }}>
+          READINESS
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function AthleteHomeDashboard() {
-  const [readinessScore, setReadinessScore] = useState<number | null>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
   const [todaySession, setTodaySession] = useState<TodaySession | null>(null);
+  const [sessionsThisWeek, setSessionsThisWeek] = useState<SessionsThisWeek | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,37 +201,48 @@ export default function AthleteHomeDashboard() {
         return;
       }
 
-      const { data: profile } = await supabase
+      const { data: profileData } = await supabase
         .from("profiles")
-        .select("readiness_score, checkin_readiness, checkin_date")
+        .select(
+          "name, readiness_score, checkin_readiness, checkin_date, aerobic_score, sleep_score, strength_upper, strength_lower, mobility_score, fatigue_score, momentum, primary_limiter, archetype, deload_active, completed_sessions, current_week, focus"
+        )
         .eq("id", session.user.id)
         .maybeSingle();
 
-      const rs = profile?.checkin_date === new Date().toISOString().slice(0, 10)
-        ? profile?.checkin_readiness ?? profile?.readiness_score ?? 70
-        : profile?.readiness_score ?? 70;
-      if (mounted) setReadinessScore(typeof rs === "number" ? rs : 70);
+      if (mounted) setProfile(profileData ?? null);
 
       const res = await fetch("/api/today-session");
       const json = res.ok ? await res.json() : null;
       if (mounted && json?.todaySession) setTodaySession(json.todaySession);
+      if (mounted && json?.sessionsThisWeek) setSessionsThisWeek(json.sessionsThisWeek);
 
       if (mounted) setLoading(false);
     }
 
     load();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (loading) {
     return (
-      <div className="mobile-polish min-h-[60vh] flex items-center justify-center">
-        <p className="text-white/40 text-sm">Loading…</p>
+      <div
+        style={{
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "rgba(238,240,244,0.55)",
+          fontSize: 14,
+        }}
+      >
+        Loading…
       </div>
     );
   }
 
-  const score = readinessScore ?? 70;
+  const readiness = getReadinessScore(profile);
   const session = todaySession ?? {
     sessionTitle: "Lower Body Strength",
     duration: "55 min",
@@ -79,51 +250,286 @@ export default function AthleteHomeDashboard() {
     exercisesCount: 4,
     detail: "Force production focus",
   };
+  const displayName = profile?.name?.trim() || "Athlete";
+  const trend = getWeekTrend(readiness);
+  const todayIndex = (() => {
+    const d = new Date().getDay();
+    return d === 0 ? 6 : d - 1;
+  })();
+  const exercises = getExercisesForSession(session.sessionTitle);
 
-  const trainingFocus = session.intensity === "Low" ? "Recovery" : session.detail || "Force Production";
+  const sleepScore = profile?.sleep_score != null ? profile.sleep_score : 50;
+  const aerobicScore = profile?.aerobic_score != null ? profile.aerobic_score : 50;
+  const fatigueScore = profile?.fatigue_score != null ? profile.fatigue_score : 50;
+  const strengthUpper = profile?.strength_upper != null ? profile.strength_upper : 50;
+  const strengthLower = profile?.strength_lower != null ? profile.strength_lower : 50;
+  const mobilityScore = profile?.mobility_score != null ? profile.mobility_score : 50;
+
+  const completed = sessionsThisWeek?.completed ?? 0;
+  const planned = sessionsThisWeek?.planned ?? 4;
+  const weekNum = profile?.current_week ?? 1;
+  const momentum = profile?.momentum != null ? String(profile.momentum) : "—";
 
   return (
-    <div className="mobile-polish flex flex-col space-y-6">
-      <h1 className="text-white font-bold text-2xl tracking-tight">Today</h1>
+    <div className="athlete-dashboard-root">
+      <style>{`
+        .athlete-dashboard-root {
+          max-width: 860px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          padding: 0 16px 24px;
+        }
+        @media (min-width: 640px) {
+          .athlete-dashboard-root {
+            grid-template-columns: repeat(3, 1fr);
+          }
+        }
+        .athlete-dashboard-full-width {
+          grid-column: 1 / -1;
+        }
+      `}</style>
 
-      {/* Readiness card */}
-      <section className="polish-card space-y-3">
-        <div className="flex items-center gap-2">
+      {/* Hero — full width */}
+      <section style={{ ...CARD_STYLE, gridColumn: "1 / -1", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: 0, marginBottom: 4 }}>
+            {getGreeting()}, {displayName}
+          </h1>
+          <p style={{ fontSize: 14, color: "rgba(238,240,244,0.55)", margin: 0 }}>
+            {getDateLabel()}
+          </p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span
-            className="h-2.5 w-2.5 shrink-0 rounded-full"
-            style={{ background: readinessDotColor(score) }}
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              background: readinessColor(readiness),
+              flexShrink: 0,
+            }}
             aria-hidden
           />
-          <p className="text-sm text-white/40">Readiness Score</p>
+          <span style={{ fontSize: 20, fontWeight: 800, color: "rgba(238,240,244,0.95)" }}>
+            {Math.round(readiness)}%
+          </span>
+          <span style={{ fontSize: 12, color: "rgba(238,240,244,0.55)" }}>readiness</span>
         </div>
-        <p className="text-5xl font-bold text-white tracking-tight">{Math.round(score)}%</p>
-        <p className="text-sm text-white/60">{readinessLabel(score)}</p>
+      </section>
+
+      {/* Readiness card */}
+      <section style={CARD_STYLE}>
+        <div style={LABEL_STYLE}>Readiness Score</div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <ReadinessRing score={readiness} color={readinessColor(readiness)} />
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              padding: "4px 10px",
+              borderRadius: 999,
+              background: readinessColor(readiness) + "22",
+              color: readinessColor(readiness),
+            }}
+          >
+            {readinessTag(readiness)}
+          </span>
+        </div>
+        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+          {[
+            { label: "Sleep", value: sleepScore, fill: "#00c9a0" },
+            { label: "Aerobic", value: aerobicScore, fill: "#0A84FF" },
+            { label: "Fatigue", value: fatigueScore, fill: "#f59e0b" },
+          ].map(({ label, value, fill }) => (
+            <div key={label}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 11, color: "rgba(238,240,244,0.55)" }}>
+                <span>{label}</span>
+                <span>{Math.round(value)}</span>
+              </div>
+              <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${Math.min(100, Math.max(0, value))}%`,
+                    background: fill,
+                    borderRadius: 3,
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Today's session card */}
-      <section className="polish-card space-y-3">
-        <p className="text-sm text-white/40">Today&apos;s Session</p>
-        <p className="text-lg font-semibold text-white">{session.sessionTitle}</p>
-        <div className="space-y-1 text-sm text-white/60">
-          <p><span className="text-white/40">Focus:</span> {trainingFocus}</p>
-          <p><span className="text-white/40">Duration:</span> {session.duration}</p>
+      <section style={CARD_STYLE}>
+        <div style={LABEL_STYLE}>Today&apos;s Session</div>
+        <p style={{ fontSize: 17, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: "0 0 10px" }}>
+          {session.sessionTitle}
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+          <span
+            style={{
+              fontSize: 11,
+              padding: "4px 10px",
+              borderRadius: 8,
+              background: "rgba(255,255,255,0.06)",
+              color: "rgba(238,240,244,0.55)",
+            }}
+          >
+            {session.duration}
+          </span>
+          <span
+            style={{
+              fontSize: 11,
+              padding: "4px 10px",
+              borderRadius: 8,
+              background: "rgba(255,255,255,0.06)",
+              color: "rgba(238,240,244,0.55)",
+            }}
+          >
+            {session.intensity}
+          </span>
         </div>
-      </section>
-
-      {/* Quick actions */}
-      <div className="flex flex-col space-y-3 pt-2">
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {exercises.map((ex) => (
+            <div
+              key={ex.name}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "rgba(255,255,255,0.04)",
+                borderRadius: 10,
+                padding: "9px 12px",
+                fontSize: 13,
+                color: "rgba(238,240,244,0.95)",
+              }}
+            >
+              <span>{ex.name}</span>
+              <span style={{ color: "rgba(238,240,244,0.55)", fontSize: 12 }}>{ex.sets} sets</span>
+            </div>
+          ))}
+        </div>
         <Link
           href="/programme"
-          className="w-full flex items-center justify-center rounded-[14px] font-bold tracking-wide h-[52px] text-white transition-opacity active:scale-[0.98] hover:opacity-90"
-          style={{ background: "linear-gradient(135deg, #0A84FF, #7B61FF)", letterSpacing: "0.02em" }}
+          style={{
+            display: "block",
+            marginTop: 16,
+            height: 50,
+            borderRadius: 14,
+            background: "linear-gradient(135deg, #0A84FF, #7B61FF)",
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: 14,
+            textAlign: "center",
+            lineHeight: "50px",
+            textDecoration: "none",
+          }}
         >
           Start Workout
         </Link>
-        <div className="flex items-center justify-center gap-4 text-xs text-white/40">
-          <Link href="/coach" className="no-underline tracking-[0.06em] uppercase hover:text-white/60">Coach</Link>
-          <Link href="/tactical/input" className="no-underline tracking-[0.06em] uppercase hover:text-white/60">Log readiness</Link>
+      </section>
+
+      {/* Weekly trend — full width */}
+      <section style={{ ...CARD_STYLE, gridColumn: "1 / -1" }}>
+        <div style={LABEL_STYLE}>Weekly Readiness Trend</div>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 4 }}>
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => (
+            <div
+              key={day}
+              style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <div
+                style={{
+                  height: 60,
+                  width: "100%",
+                  maxWidth: 24,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    height: `${Math.max(4, (trend[i] / 100) * 60)}px`,
+                    borderRadius: 4,
+                    background: i === todayIndex ? "#00c9a0" : "rgba(255,255,255,0.12)",
+                  }}
+                />
+              </div>
+              <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.05em", color: "rgba(238,240,244,0.28)" }}>
+                {day}
+              </span>
+            </div>
+          ))}
         </div>
-      </div>
+      </section>
+
+      {/* Capacity card */}
+      <section style={CARD_STYLE}>
+        <div style={LABEL_STYLE}>Capacity Profile</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {[
+            { label: "Strength Upper", value: strengthUpper },
+            { label: "Strength Lower", value: strengthLower },
+            { label: "Aerobic Base", value: aerobicScore },
+            { label: "Mobility", value: mobilityScore },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 12, color: "rgba(238,240,244,0.95)" }}>
+                <span>{label}</span>
+                <span>{Math.round(value)}/100</span>
+              </div>
+              <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${Math.min(100, Math.max(0, value))}%`,
+                    background: "#0A84FF",
+                    borderRadius: 3,
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Sessions card */}
+      <section style={CARD_STYLE}>
+        <div style={LABEL_STYLE}>This Week</div>
+        <p style={{ fontSize: 36, fontWeight: 800, color: "rgba(238,240,244,0.95)", margin: "0 0 4px" }}>
+          {completed}
+        </p>
+        <p style={{ fontSize: 13, color: "rgba(238,240,244,0.55)", margin: "0 0 12px" }}>
+          of {planned} planned
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          <span
+            style={{
+              fontSize: 11,
+              padding: "4px 10px",
+              borderRadius: 8,
+              background: "rgba(255,255,255,0.06)",
+              color: "rgba(238,240,244,0.55)",
+            }}
+          >
+            Momentum: {momentum}
+          </span>
+          <span style={{ fontSize: 11, color: "rgba(238,240,244,0.28)" }}>Week {weekNum}</span>
+        </div>
+      </section>
     </div>
   );
 }
