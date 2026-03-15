@@ -689,7 +689,7 @@ class PerformanceEngineClass {
     const focusExplanation = snapshot?.goal || snapshot?.focus
       ? `Programme targets ${snapshot.goal || snapshot.focus}. Primary limiter: ${snapshot.primary_limiter ?? "—"}.`
       : "No specific goal set. Set a goal in Strategy to align programme.";
-    const cap = this.calculateCapacityBreakdown(snapshot);
+    const cap = this.calculateCapacityBreakdown(null);
     const capacityReasoning = cap.limitingFactor
       ? `Capacity limited by ${cap.limitingFactor}. ${cap.programmeInfluence ?? ""}`
       : `Capacity at ${cap.score}/100. ${cap.programmeInfluence ?? ""}`;

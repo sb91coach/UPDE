@@ -133,7 +133,7 @@ export default function TacticalPage() {
     const g = bands.filter((b) => b.band === "green");
     const a = bands.filter((b) => b.band === "amber");
     const r = bands.filter((b) => b.band === "red");
-    const trend = (list: typeof bands) => {
+    const trend = (list: typeof bands): "up" | "down" | "stable" => {
       const u = list.filter((b) => b.trend === "up").length;
       const d = list.filter((b) => b.trend === "down").length;
       return u > d ? "up" : d > u ? "down" : "stable";

@@ -118,7 +118,7 @@ export function getFullReadinessFromEntries(entries: ReadinessEntry[]): FullRead
   latestById.forEach((entry, id) => {
     const input = entryToReadinessInput(entry);
     const result = calculateReadiness(input);
-    rows.push({ id, ...result });
+    rows.push({ ...result, id: String(id) });
   });
   return rows.sort((a, b) => {
     const na = parseInt(a.id.replace(/\D/g, ""), 10) || 0;

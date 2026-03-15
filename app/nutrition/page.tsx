@@ -115,7 +115,7 @@ export default function NutritionPage() {
     const last7 = sorted.slice(-7);
     const prev7 = sorted.slice(-14, -7);
     const avg = (arr: typeof last7, key: keyof typeof last7[0]) =>
-      arr.reduce((s, d) => s + d[key], 0) / arr.length;
+      arr.reduce((s, d) => s + Number(d[key]), 0) / arr.length;
     const pct = (a: number, b: number) => (b ? ((a - b) / b) * 100 : 0);
     return [
       { label: "Protein", sevenDayAvg: Math.round(avg(last7, "protein")), percentChangeVsPrevious7: pct(avg(last7, "protein"), avg(prev7, "protein")), unit: "g" },

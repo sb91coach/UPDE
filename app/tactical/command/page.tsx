@@ -236,17 +236,17 @@ export default function TacticalCommandPage() {
                 <div className="metricCard">
                   <div className="metricLabel">Recovery State</div>
                   <div className="metricValue">{Math.round(recoveryVal)}</div>
-                  <div className="metricTrend">{trendArrow(recoveryTrend)} {recoveryTrend === "IMPROVING" ? "increasing" : recoveryTrend === "DECLINING" ? "declining" : "stable"}</div>
+                  <div className="metricTrend">{trendArrow(recoveryTrend as TrendIndicator)} {recoveryTrend === "IMPROVING" ? "increasing" : recoveryTrend === "DECLINING" ? "declining" : "stable"}</div>
                 </div>
                 <div className="metricCard">
                   <div className="metricLabel">Structural Integrity</div>
                   <div className="metricValue">{Math.round(structuralVal)}</div>
-                  <div className="metricTrend">{trendArrow(structuralTrend)} {structuralTrend === "IMPROVING" ? "increasing" : structuralTrend === "DECLINING" ? "declining" : "stable"}</div>
+                  <div className="metricTrend">{trendArrow(structuralTrend as TrendIndicator)} {structuralTrend === "IMPROVING" ? "increasing" : structuralTrend === "DECLINING" ? "declining" : "stable"}</div>
                 </div>
                 <div className="metricCard">
                   <div className="metricLabel">Exposure Load</div>
                   <div className="metricValue">{Math.round(exposureVal)}</div>
-                  <div className="metricTrend">{trendArrow(exposureTrend)} {exposureTrend === "IMPROVING" ? "increasing" : exposureTrend === "DECLINING" ? "declining" : "stable"}</div>
+                  <div className="metricTrend">{trendArrow(exposureTrend as TrendIndicator)} {exposureTrend === "IMPROVING" ? "increasing" : exposureTrend === "DECLINING" ? "declining" : "stable"}</div>
                 </div>
               </div>
             </section>

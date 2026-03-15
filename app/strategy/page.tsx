@@ -195,7 +195,7 @@ export default function StrategyPage() {
       const existing = selected.milestoneProgress ?? [];
       const next = existing.filter((m) => m.milestoneId !== milestoneId);
       next.push({ milestoneId, completed: Math.abs(deviation) <= 5, actualValue, deviation });
-      PerformanceEngine.updateMilestone(selectedId, next);
+      if (selectedId != null) PerformanceEngine.updateMilestone(selectedId, next);
       setGoals(PerformanceEngine.getGoals());
       setMilestoneModalMilestone(null);
     },
