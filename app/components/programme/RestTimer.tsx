@@ -69,26 +69,42 @@ export default function RestTimer({ rest, label = "Rest" }: RestTimerProps) {
       className={`restTimerRoot ${running ? "restTimerFloating" : ""}`}
       style={{
         marginTop: 14,
-        padding: "14px 16px",
-        background: "rgba(47,128,237,0.08)",
-        border: "1px solid rgba(47,128,237,0.2)",
-        borderRadius: 12,
-        display: "flex",
-        flexWrap: "wrap",
-        alignItems: "center",
-        gap: 12,
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 16,
+        padding: "16px 20px",
+        textAlign: "center",
       }}
     >
-      <div style={{ fontSize: 10, letterSpacing: "0.08em", opacity: 0.75, width: "100%" }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, opacity: 0.95, letterSpacing: "0.02em" }}>
+      <div
+        style={{
+          fontSize: 10,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: "rgba(238,240,244,0.35)",
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          color: "#00c9a0",
+          fontSize: 36,
+          fontWeight: 700,
+          fontVariantNumeric: "tabular-nums",
+          marginBottom: 10,
+        }}
+      >
         {running ? formatTime(remaining) : formatTime(displaySeconds)}
       </div>
       <button
         type="button"
         onClick={start}
         disabled={running}
-        className="min-h-[44px] min-w-[44px]"
         style={{
+          minHeight: 44,
+          minWidth: 120,
           padding: "10px 18px",
           fontSize: 13,
           fontWeight: 600,

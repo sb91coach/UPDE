@@ -24,32 +24,41 @@ export default function SessionOverview({
     <div
       style={{
         marginBottom: 16,
-        padding: "14px 18px",
-        background: "rgba(255,255,255,0.04)",
+        padding: "18px 20px",
+        background: "rgba(255,255,255,0.05)",
         border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 12,
+        borderRadius: 20,
       }}
     >
-      <div style={{ fontSize: 10, letterSpacing: "0.08em", opacity: 0.7, marginBottom: 10 }}>
+      <div
+        style={{
+          color: "rgba(238,240,244,0.25)",
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          marginBottom: 10,
+        }}
+      >
         Session Overview
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13, lineHeight: 1.5 }}>
         {focus != null && focus !== "" && (
           <div style={{ display: "flex", gap: 8 }}>
-            <span style={{ opacity: 0.75, minWidth: 72 }}>Focus</span>
-            <span style={{ opacity: 0.95 }}>{focus}</span>
+            <span style={{ color: "rgba(238,240,244,0.35)", minWidth: 72 }}>Focus</span>
+            <span style={{ color: "rgba(238,240,244,0.95)" }}>{focus}</span>
           </div>
         )}
         {duration != null && duration > 0 && (
           <div style={{ display: "flex", gap: 8 }}>
-            <span style={{ opacity: 0.75, minWidth: 72 }}>Duration</span>
-            <span style={{ opacity: 0.95 }}>{duration} minutes</span>
+            <span style={{ color: "rgba(238,240,244,0.35)", minWidth: 72 }}>Duration</span>
+            <span style={{ color: "rgba(238,240,244,0.95)" }}>{duration} minutes</span>
           </div>
         )}
         {objective != null && objective !== "" && (
           <div style={{ display: "flex", gap: 8 }}>
-            <span style={{ opacity: 0.75, minWidth: 72 }}>Objective</span>
-            <span style={{ opacity: 0.95 }}>{objective}</span>
+            <span style={{ color: "rgba(238,240,244,0.35)", minWidth: 72 }}>Objective</span>
+            <span style={{ color: "rgba(238,240,244,0.95)" }}>{objective}</span>
           </div>
         )}
         {(!focus || focus === "") && (!duration || duration <= 0) && (!objective || objective === "") && (

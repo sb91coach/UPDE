@@ -78,10 +78,13 @@ export default function ExerciseCard({
   return (
     <>
       <div
-        className="exerciseCardRoot p-4 sm:p-5 rounded-xl mb-3 min-w-0"
+        className=""
         style={{
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.09)",
+          borderRadius: 14,
+          padding: "14px 16px",
+          marginBottom: 8,
         }}
       >
         <div
@@ -93,19 +96,18 @@ export default function ExerciseCard({
             marginBottom: 4,
           }}
         >
-          <div
-            className="exerciseCardName"
+          <h3
+            className=""
             style={{
-              fontSize: "clamp(14px, 4vw, 16px)",
-              fontWeight: 700,
-              opacity: 0.98,
-              letterSpacing: "-0.01em",
-              lineHeight: 1.3,
+              color: "rgba(238,240,244,0.95)",
+              fontSize: 15,
+              fontWeight: 600,
+              margin: 0,
               minWidth: 0,
             }}
           >
             {name}
-          </div>
+          </h3>
           <a
             href={`https://www.youtube.com/results?search_query=${encodeURIComponent(name + " technique 30 seconds")}`}
             target="_blank"
@@ -119,11 +121,11 @@ export default function ExerciseCard({
 
         {detailParts.length > 0 && (
           <div
-            className="exerciseCardDetail"
+            className=""
             style={{
-              fontSize: 14,
-              fontWeight: 500,
-              opacity: 0.75,
+              fontSize: 13,
+              color: "rgba(238,240,244,0.5)",
+              marginTop: 4,
               marginBottom: notes ? 10 : 8,
               lineHeight: 1.4,
             }}
@@ -135,19 +137,16 @@ export default function ExerciseCard({
         {notes != null && notes !== "" && (
           <div
             style={{
-              marginTop: 10,
-              padding: "10px 12px",
-              paddingLeft: 12,
-              borderLeft: "3px solid rgba(47,128,237,0.5)",
-              background: "rgba(0,0,0,0.15)",
-              borderRadius: 0,
+              color: "rgba(238,240,244,0.35)",
               fontSize: 12,
+              fontStyle: "italic",
+              borderLeft: "2px solid #00c9a0",
+              paddingLeft: 8,
+              marginTop: 6,
               lineHeight: 1.5,
-              opacity: 0.9,
             }}
           >
-            <div style={{ fontSize: 11, letterSpacing: "0.06em", opacity: 0.75, marginBottom: 4 }}>Coach Note</div>
-            <span style={{ fontSize: 14 }}>{notes}</span>
+            {notes}
           </div>
         )}
 

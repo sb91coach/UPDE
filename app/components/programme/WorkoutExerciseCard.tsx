@@ -59,7 +59,6 @@ export default function WorkoutExerciseCard({
         borderRadius: 14,
         padding: "14px 16px",
         marginBottom: 8,
-        color: "rgba(238,240,244,0.92)",
       }}
     >
       <div
@@ -94,11 +93,22 @@ export default function WorkoutExerciseCard({
           aria-expanded={expanded}
         >
           <div className="min-w-0">
-            <h3 className="truncate" style={{ fontSize: 15, fontWeight: 600, color: "rgba(238,240,244,0.92)" }}>
+            <h3
+              className="truncate"
+              style={{
+                color: "rgba(238,240,244,0.95)",
+                fontSize: 15,
+                fontWeight: 600,
+                margin: 0,
+              }}
+            >
               {name}
             </h3>
             {prescription && (
-              <p className="truncate mt-0.5" style={{ fontSize: 13, color: "rgba(238,240,244,0.6)" }}>
+              <p
+                className="truncate mt-0.5"
+                style={{ fontSize: 13, color: "rgba(238,240,244,0.5)", margin: 0 }}
+              >
                 {prescription}
               </p>
             )}

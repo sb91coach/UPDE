@@ -16,8 +16,29 @@ export default function SessionHeader({
   startWorkoutLabel = "Start Workout",
 }: SessionHeaderProps) {
   return (
-    <header className="polish-card space-y-3">
-      <h2 style={{ fontSize: 20, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: 0 }}>{title}</h2>
+    <header
+      className=""
+      style={{
+        background: "rgba(255,255,255,0.05)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 20,
+        padding: "18px 20px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      <h2
+        style={{
+          color: "rgba(238,240,244,0.95)",
+          fontSize: 20,
+          fontWeight: 700,
+          letterSpacing: "-0.3px",
+          margin: 0,
+        }}
+      >
+        {title}
+      </h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 14, color: "rgba(238,240,244,0.6)" }}>
         {duration != null && duration !== "" && (
           <p style={{ margin: 0 }}>

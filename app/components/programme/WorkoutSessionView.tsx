@@ -56,14 +56,36 @@ export default function WorkoutSessionView({
 
   if (exercises.length === 0) {
     return (
-      <div className="mobile-polish p-6 text-center" style={{ color: "rgba(238,240,244,0.6)" }}>
+      <div
+        className=""
+        style={{
+          background: "#0a0c12",
+          minHeight: "100vh",
+          padding: "0 16px 120px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "rgba(238,240,244,0.6)",
+          textAlign: "center",
+        }}
+      >
         <p>No exercises in this session. Select a day below to view the programme.</p>
       </div>
     );
   }
 
   return (
-    <div className="mobile-polish workoutSessionView pb-32 md:pb-8 flex flex-col space-y-6">
+    <div
+      className=""
+      style={{
+        background: "#0a0c12",
+        minHeight: "100vh",
+        padding: "0 16px 120px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 24,
+      }}
+    >
       {!workoutMode ? (
         <>
           <SoftPaywall isPro={isPro} feature="Programme Engine">

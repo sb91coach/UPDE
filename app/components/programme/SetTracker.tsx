@@ -140,22 +140,17 @@ export default function SetTracker({
           key={exerciseKey ? `${exerciseKey}-${i}` : i}
           style={{
             display: "grid",
-            gridTemplateColumns: showRpe ? "auto 1fr 1fr 1fr auto" : "auto 1fr 1fr auto",
+            gridTemplateColumns: showRpe ? "44px 1fr 1fr 1fr 36px" : "44px 1fr 1fr 36px",
             gap: 8,
             alignItems: "center",
-            width: "100%",
-            padding: 10,
-            borderRadius: 12,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            marginBottom: 8,
           }}
         >
           <span
             style={{
+              color: "rgba(238,240,244,0.4)",
               fontSize: 12,
               fontWeight: 700,
-              color: "rgba(238,240,244,0.4)",
-              minWidth: 44,
             }}
           >
             Set {i + 1}
@@ -167,15 +162,15 @@ export default function SetTracker({
             value={row.reps}
             onChange={(e) => setReps(i, e.target.value)}
             style={{
-              width: "100%",
-              height: 40,
-              padding: "10px 12px",
+              background: "rgba(255,255,255,0.07)",
+              border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.06)",
               color: "rgba(238,240,244,0.9)",
+              padding: "10px 12px",
               fontSize: 14,
+              width: "100%",
               textAlign: "center",
+              outline: "none",
             }}
             aria-label={`Set ${i + 1} reps`}
           />
@@ -186,15 +181,15 @@ export default function SetTracker({
             value={row.weight}
             onChange={(e) => setWeight(i, e.target.value)}
             style={{
-              width: "100%",
-              height: 40,
-              padding: "10px 12px",
+              background: "rgba(255,255,255,0.07)",
+              border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.06)",
               color: "rgba(238,240,244,0.9)",
+              padding: "10px 12px",
               fontSize: 14,
+              width: "100%",
               textAlign: "center",
+              outline: "none",
             }}
             aria-label={`Set ${i + 1} weight`}
           />
@@ -206,39 +201,30 @@ export default function SetTracker({
               value={row.rpe}
               onChange={(e) => setRpe(i, e.target.value)}
               style={{
-                width: "100%",
-                height: 40,
-                padding: "10px 12px",
+                background: "rgba(255,255,255,0.07)",
+                border: "1px solid rgba(255,255,255,0.12)",
                 borderRadius: 10,
-                border: "1px solid rgba(255,255,255,0.1)",
-                background: "rgba(255,255,255,0.06)",
                 color: "rgba(238,240,244,0.9)",
-                fontSize: 13,
+                padding: "10px 12px",
+                fontSize: 14,
+                width: "100%",
                 textAlign: "center",
+                outline: "none",
               }}
               aria-label={`Set ${i + 1} RPE`}
             />
           )}
-          <button
-            type="button"
-            style={{
-              height: 40,
-              width: 40,
-              flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "999px",
-              border: row.completed ? "2px solid #00c9a0" : "2px solid rgba(255,255,255,0.35)",
-              background: row.completed ? "#00c9a0" : "transparent",
-              color: row.completed ? "#0b1120" : "rgba(238,240,244,0.7)",
-              cursor: "pointer",
-            }}
-            onClick={() => setCompleted(i, !row.completed)}
+          <input
+            type="checkbox"
+            checked={row.completed}
+            onChange={() => setCompleted(i, !row.completed)}
             aria-label={row.completed ? `Set ${i + 1} completed` : `Mark set ${i + 1} complete`}
-          >
-            {row.completed ? "✓" : "○"}
-          </button>
+            style={{
+              accentColor: "#00c9a0",
+              width: 18,
+              height: 18,
+            }}
+          />
         </div>
       ))}
     </div>

@@ -55,6 +55,7 @@ export default function NutritionPage() {
   const [recentMeals, setRecentMeals] = useState<any[]>([]);
   const [loadingMeals, setLoadingMeals] = useState(false);
   const [mealsError, setMealsError] = useState<string | null>(null);
+  const [toast, setToast] = useState("");
 
   const refreshMacroLogs = useCallback(() => {
     setMacroLogs(getMacroLogs());
@@ -78,7 +79,7 @@ export default function NutritionPage() {
     return () => unsub();
   }, []);
 
-  useEffect(() => {
+  const loadMeals = useCallback(() => {
     let cancelled = false;
     setLoadingMeals(true);
     setMealsError(null);
@@ -103,6 +104,17 @@ export default function NutritionPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const cleanup = loadMeals();
+    return cleanup;
+  }, [loadMeals]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(""), 2000);
+    return () => clearTimeout(id);
+  }, [toast]);
 
   const formatLoggedAt = (iso: string | null | undefined) => {
     if (!iso) return "";
@@ -346,6 +358,38 @@ export default function NutritionPage() {
             }
           `}</style>
 
+          {toast && (
+            <div
+              style={{
+                position: "fixed",
+                top: 60,
+                left: "50%",
+                transform: "translateX(-50%)",
+                background: "rgba(0,201,160,0.15)",
+                border: "1px solid rgba(0,201,160,0.3)",
+                borderRadius: 12,
+                padding: "10px 20px",
+                color: "#00c9a0",
+                fontSize: 14,
+                fontWeight: 600,
+                zIndex: 600,
+                transition: "opacity 0.3s ease",
+                opacity: toast ? 1 : 0,
+              }}
+            >
+              {toast}
+            </div>
+          )}
+
+          <div className="nutrition-card">
+            <FoodScanner
+              onMealLogged={() => {
+                loadMeals();
+                setToast("Meal logged ✓");
+              }}
+            />
+          </div>
+
           <div className="nutrition-card">
             <div className="nutrition-section-label">Nutrition</div>
             <h1 className="nutrition-headline">Fuel strategy</h1>
@@ -366,40 +410,53 @@ export default function NutritionPage() {
           )}
 
           <div className="nutrition-card">
-            <FoodScanner />
-          </div>
-
-          <div className="nutrition-card">
             <div className="meals-header">
               <div className="meals-title">Recent meals</div>
               {loadingMeals && <div className="meals-sub">Loading…</div>}
             </div>
             {mealsError && <div className="meals-error">{mealsError}</div>}
             {!mealsError && recentMeals.length === 0 && !loadingMeals && (
-              <div className="meals-empty">No meals logged yet.</div>
+              <div className="meals-empty" style={{ textAlign: "center" }}>
+                No meals logged today.
+              </div>
             )}
             <div className="meal-list">
               {recentMeals.map((m) => (
                 <div key={m.id} className="meal-row">
                   <div className="meal-row-main">
-                    <div className="meal-name">{m.meal_name}</div>
-                    <div className="meal-calories">
-                      {m.calories != null ? `${m.calories} kcal` : ""}
+                    <div>
+                      <div className="meal-name">{m.meal_name}</div>
+                      <div className="meal-meta-row">
+                        {m.protein_g != null && (
+                          <span className="meal-pill">P {m.protein_g}g</span>
+                        )}
+                        {m.carbs_g != null && (
+                          <span className="meal-pill">C {m.carbs_g}g</span>
+                        )}
+                        {m.fat_g != null && (
+                          <span className="meal-pill">F {m.fat_g}g</span>
+                        )}
+                        <span className="meal-time">
+                          {formatLoggedAt(m.logged_at)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="meal-meta-row">
-                    {m.protein_g != null && (
-                      <span className="meal-pill">P {m.protein_g}g</span>
-                    )}
-                    {m.carbs_g != null && (
-                      <span className="meal-pill">C {m.carbs_g}g</span>
-                    )}
-                    {m.fat_g != null && (
-                      <span className="meal-pill">F {m.fat_g}g</span>
-                    )}
-                    <span className="meal-time">
-                      {formatLoggedAt(m.logged_at)}
-                    </span>
+                    <div className="meal-calories">
+                      {m.calories != null && (
+                        <>
+                          <div>{m.calories}</div>
+                          <div
+                            style={{
+                              fontSize: 10,
+                              color: "rgba(238,240,244,0.4)",
+                              textAlign: "right",
+                            }}
+                          >
+                            kcal
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
