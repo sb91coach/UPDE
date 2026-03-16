@@ -77,9 +77,9 @@ export default function WeekCalendarView({
           gap: 0;
         }
         .session-card {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.07);
-          border-radius: 12px;
+          background: var(--bg-card);
+          border: var(--border-card);
+          border-radius: var(--radius-card);
           padding: 16px 18px;
           margin-bottom: 10px;
           display: flex;
@@ -87,15 +87,16 @@ export default function WeekCalendarView({
           gap: 14px;
           min-height: 64px;
           cursor: pointer;
-          transition: background 0.15s, border-color 0.15s;
+          transition: background 0.15s, border-color 0.15s, transform 0.1s;
           -webkit-tap-highlight-color: transparent;
           width: 100%;
           text-align: left;
         }
         .session-card:hover,
         .session-card:active {
-          background: rgba(255, 255, 255, 0.055);
-          border-color: rgba(255, 255, 255, 0.11);
+          background: var(--bg-card-hover);
+          border: var(--border-active);
+          transform: translateY(-1px);
         }
         .session-dot {
           width: 10px;
@@ -104,11 +105,11 @@ export default function WeekCalendarView({
           flex-shrink: 0;
         }
         .session-dot-red {
-          background: #f04e37;
-          box-shadow: 0 0 8px rgba(240, 78, 55, 0.4);
+          background: var(--accent-red);
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
         }
         .session-dot-green {
-          background: #00c9a0;
+          background: var(--accent-teal);
           box-shadow: 0 0 8px rgba(0, 201, 160, 0.4);
         }
         .session-dot-grey {
@@ -125,21 +126,21 @@ export default function WeekCalendarView({
           font-size: 15px;
           font-weight: 700;
           letter-spacing: -0.2px;
-          color: #eef0f4;
+          color: var(--text-primary);
         }
         .session-card-title {
           font-size: 13px;
           font-weight: 500;
-          color: rgba(238, 240, 244, 0.6);
+          color: var(--text-secondary);
         }
         .session-card-duration {
           font-size: 11px;
           font-weight: 500;
-          color: rgba(238, 240, 244, 0.4);
+          color: var(--text-muted);
           margin-left: auto;
         }
         .session-card-chevron {
-          color: rgba(238, 240, 244, 0.2);
+          color: var(--text-faint);
           margin-left: 8px;
           font-size: 18px;
           line-height: 1;

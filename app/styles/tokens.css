@@ -1,0 +1,50 @@
+:root {
+  /* Backgrounds */
+  --bg-base: #0a0c12;
+  --bg-card: rgba(255,255,255,0.05);
+  --bg-card-hover: rgba(255,255,255,0.08);
+  --bg-card-active: rgba(255,255,255,0.03);
+  --bg-input: rgba(255,255,255,0.06);
+
+  /* Borders */
+  --border-card: 1px solid rgba(255,255,255,0.09);
+  --border-subtle: 1px solid rgba(255,255,255,0.05);
+  --border-active: 1px solid rgba(255,255,255,0.18);
+
+  /* Text */
+  --text-primary: rgba(238,240,244,0.95);
+  --text-secondary: rgba(238,240,244,0.60);
+  --text-muted: rgba(238,240,244,0.35);
+  --text-faint: rgba(238,240,244,0.18);
+
+  /* Accents */
+  --accent-teal: #00c9a0;
+  --accent-blue: #0A84FF;
+  --accent-purple: #7B61FF;
+  --accent-amber: #f59e0b;
+  --accent-red: #ef4444;
+
+  /* Gradients */
+  --gradient-cta: linear-gradient(135deg, #0A84FF 0%, #7B61FF 100%);
+  --gradient-teal: linear-gradient(135deg, #00c9a0 0%, #0A84FF 100%);
+
+  /* Radius */
+  --radius-card: 20px;
+  --radius-inner: 12px;
+  --radius-pill: 9999px;
+  --radius-btn: 14px;
+
+  /* Spacing */
+  --page-padding: 16px;
+  --card-padding: 18px;
+  --card-gap: 10px;
+  --section-gap: 24px;
+
+  /* Typography */
+  --font-base: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  --font-size-title: 22px;
+  --font-size-heading: 17px;
+  --font-size-body: 14px;
+  --font-size-label: 10px;
+}
+

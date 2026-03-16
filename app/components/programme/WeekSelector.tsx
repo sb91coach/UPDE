@@ -25,30 +25,8 @@ export default function WeekSelector({
   const weeks = Array.from({ length: Math.max(1, totalWeeks) }, (_, i) => i + 1);
 
   return (
-    <div
-      className={className}
-      role="tablist"
-      aria-label="Select week"
-      style={{
-        marginBottom: 16,
-        overflow: "hidden",
-      }}
-    >
-      <div
-        className="weekSelectorScroll"
-        role="presentation"
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          flexWrap: "nowrap",
-          gap: 8,
-          overflowX: "auto",
-          overflowY: "hidden",
-          scrollbarWidth: "none",
-          WebkitOverflowScrolling: "touch",
-          paddingBottom: 4,
-        }}
-      >
+    <div className={`weekSelectorRoot ${className ?? ""}`} role="tablist" aria-label="Select week">
+      <div className="weekSelectorScroll" role="presentation">
         {weeks.map((weekNum) => {
           const isActive = weekNum === selectedWeek;
           return (
@@ -59,35 +37,77 @@ export default function WeekSelector({
               aria-selected={isActive}
               aria-label={`Week ${weekNum}`}
               onClick={() => onWeekChange(weekNum)}
-              style={{
-                flexShrink: 0,
-                minWidth: 72,
-                height: 36,
-                padding: "0 14px",
-                whiteSpace: "nowrap",
-                fontSize: 12,
-                fontWeight: isActive ? 700 : 600,
-                letterSpacing: "0.02em",
-                border: isActive ? "1px solid rgba(0,201,160,0.3)" : "1px solid rgba(255,255,255,0.08)",
-                background: isActive ? "rgba(0,201,160,0.1)" : "rgba(255,255,255,0.03)",
-                color: isActive ? "#00C9A0" : "rgba(238,240,244,0.4)",
-                cursor: "pointer",
-                transition: "all 0.15s",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: 8,
-                fontFamily: "inherit",
-              }}
+              className={`weekSelectorPill ${isActive ? "weekSelectorPill--active" : ""}`}
             >
-              Week {weekNum}
+              <span className="weekSelectorDot" aria-hidden />
+              <span className="weekSelectorLabel">Week {weekNum}</span>
             </button>
           );
         })}
       </div>
       <style jsx>{`
+        .weekSelectorRoot {
+          margin-bottom: 14px;
+          overflow: hidden;
+        }
         .weekSelectorScroll::-webkit-scrollbar {
           display: none;
+        }
+        .weekSelectorScroll {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          gap: 8px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+          padding: 4px 0 4px;
+        }
+        .weekSelectorPill {
+          position: relative;
+          flex-shrink: 0;
+          min-width: 64px;
+          height: 36px;
+          padding: 0 14px;
+          border-radius: 18px;
+          border: var(--border-card);
+          background: var(--bg-card);
+          color: var(--text-muted);
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.12s ease;
+          font-family: inherit;
+        }
+        .weekSelectorPill--active {
+          background: var(--gradient-cta);
+          border: none;
+          color: #ffffff;
+          transform: translateY(-1px);
+        }
+        .weekSelectorDot {
+          position: absolute;
+          top: -6px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background: transparent;
+        }
+        .weekSelectorPill--active .weekSelectorDot {
+          background: var(--accent-teal);
+          box-shadow: 0 0 8px rgba(0, 201, 160, 0.65);
+        }
+        .weekSelectorLabel {
+          position: relative;
+          z-index: 1;
         }
       `}</style>
     </div>
