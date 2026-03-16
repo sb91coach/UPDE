@@ -56,10 +56,12 @@ function SectionTitle({ text }: { text: string }) {
   return (
     <div
       style={{
-        fontSize: 11,
-        letterSpacing: 2,
-        opacity: 0.6,
+        fontSize: 10,
+        letterSpacing: "0.12em",
+        fontWeight: 700,
+        textTransform: "uppercase",
         marginBottom: 12,
+        color: "rgba(238,240,244,0.25)",
       }}
     >
       {text}
@@ -248,23 +250,35 @@ export default function SettingsView() {
 
       <div className="container">
         <div className="settingsHero sectionBlock delay1">
-          <h1 className="settingsPageTitle">Settings</h1>
-          <p className="settingsPageSub">
+          <h1
+            className="settingsPageTitle"
+            style={{ color: "rgba(238,240,244,0.95)" }}
+          >
+            Settings
+          </h1>
+          <p
+            className="settingsPageSub"
+            style={{ color: "rgba(238,240,244,0.7)" }}
+          >
             Manage your profile, subscription, payment methods, preferences, marketing, and connected devices.
           </p>
         </div>
 
         <div className="sectionBlock delay2">
           <SectionTitle text="PROFILE" />
-          <SettingsCard
-            title="Profile & identity"
-            description="View and edit your performance profile, readiness inputs, and programme identity. Benchmarks and intake live on their own pages."
-            action={
-              <Link href="/profile" className="settingsCardBtn">
-                Open dashboard
-              </Link>
-            }
-          />
+            <SettingsCard
+              title="Profile & identity"
+              description="View and edit your performance profile, readiness inputs, and programme identity. Benchmarks and intake live on their own pages."
+              action={
+                <Link
+                  href="/profile"
+                  className="settingsCardBtn"
+                  style={{ color: "rgba(238,240,244,0.95)", textDecoration: "none" }}
+                >
+                  Open dashboard
+                </Link>
+              }
+            />
         </div>
 
         <div className="sectionBlock delay3">
@@ -445,8 +459,8 @@ export default function SettingsView() {
       <style jsx>{`
         .settingsOuter {
           min-height: 100vh;
-          background: linear-gradient(180deg, #0a0a0f 0%, #0f1117 50%, #0a0a0f 100%);
-          color: #fff;
+          background: #0a0c12;
+          color: rgba(238,240,244,0.9);
         }
         .settingsToast {
           position: fixed;
@@ -502,7 +516,6 @@ export default function SettingsView() {
         }
         .settingsPageSub {
           font-size: 15px;
-          opacity: 0.7;
           margin: 0;
           max-width: 560px;
         }
@@ -541,12 +554,13 @@ export default function SettingsView() {
           font-size: 18px;
           font-weight: 600;
           margin-bottom: 6px;
+          color: rgba(238,240,244,0.95);
         }
         .settingsCardDesc {
           font-size: 14px;
-          opacity: 0.7;
           line-height: 1.45;
           max-width: 520px;
+          color: rgba(238,240,244,0.7);
         }
         .settingsCardBtn {
           display: inline-block;
@@ -595,10 +609,11 @@ export default function SettingsView() {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          color: rgba(238,240,244,0.7);
         }
         .settingsCardMetaValue {
           font-weight: 600;
-          color: #27E0A6;
+          color: rgba(238,240,244,0.95);
         }
         .settingsPrefList {
           margin-top: 16px;
@@ -614,14 +629,14 @@ export default function SettingsView() {
           cursor: pointer;
         }
         .settingsPrefRow span {
-          opacity: 0.9;
+          color: rgba(238,240,244,0.7);
         }
         .settingsSelect {
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 8px;
-          color: #fff;
-          padding: 8px 12px;
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+          color: rgba(238,240,244,0.9);
+          padding: 11px 14px;
           font-size: 13px;
           cursor: pointer;
         }

@@ -94,7 +94,14 @@ export default function SettingsPage() {
 
   return (
     <OSLayer>
-      <div className="settings-root">
+      <div
+        className="settings-root"
+        style={{
+          background: "#0a0c12",
+          minHeight: "100vh",
+          color: "rgba(238,240,244,0.9)",
+        }}
+      >
         <style jsx>{`
           .settings-root {
             max-width: 860px;
@@ -105,11 +112,6 @@ export default function SettingsPage() {
             gap: 16px;
           }
           .devices-section-label {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: rgba(238, 240, 244, 0.35);
             margin-bottom: 12px;
           }
           .devices-grid {
@@ -216,17 +218,39 @@ export default function SettingsPage() {
 
         {!loadingPrefs && (
           <section>
-            <div className="devices-section-label">CONNECTED DEVICES</div>
+            <div
+              className="devices-section-label"
+              style={{
+                color: "rgba(238,240,244,0.25)",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+              }}
+            >
+              CONNECTED DEVICES
+            </div>
             <div className="devices-grid">
               {/* Garmin */}
               <div className="device-card">
                 <div className="device-main">
-                  <div className="device-title" style={{ fontWeight: 600 }}>
+                  <div
+                    className="device-title"
+                    style={{ fontWeight: 600, color: "rgba(238,240,244,0.95)" }}
+                  >
                     Garmin
                   </div>
-                  <div className="device-sub">HRV · Sleep · Stress · Daily Activity</div>
+                  <div
+                    className="device-sub"
+                    style={{ color: "rgba(238,240,244,0.7)" }}
+                  >
+                    HRV · Sleep · Stress · Daily Activity
+                  </div>
                   {prefs?.garmin_last_sync && prefs.garmin_connected && (
-                    <div className="device-meta">
+                    <div
+                      className="device-meta"
+                      style={{ color: "rgba(238,240,244,0.35)" }}
+                    >
                       {(() => {
                         const last = new Date(prefs.garmin_last_sync!);
                         const diffMs = Date.now() - last.getTime();
@@ -253,6 +277,7 @@ export default function SettingsPage() {
                           type="button"
                           className="link-text"
                           onClick={handleGarminDisconnect}
+                          style={{ color: "rgba(238,240,244,0.35)" }}
                         >
                           Disconnect
                         </button>
@@ -289,14 +314,25 @@ export default function SettingsPage() {
                       </svg>
                     </div>
                     <div>
-                      <div className="device-title" style={{ fontWeight: 600 }}>
+                      <div
+                        className="device-title"
+                        style={{ fontWeight: 600, color: "rgba(238,240,244,0.95)" }}
+                      >
                         Whoop
                       </div>
-                      <div className="device-sub">Recovery · HRV · Sleep · Strain</div>
+                      <div
+                        className="device-sub"
+                        style={{ color: "rgba(238,240,244,0.7)" }}
+                      >
+                        Recovery · HRV · Sleep · Strain
+                      </div>
                     </div>
                   </div>
                   {prefs?.whoop_last_sync && prefs.whoop_connected && (
-                    <div className="device-meta">
+                    <div
+                      className="device-meta"
+                      style={{ color: "rgba(238,240,244,0.35)" }}
+                    >
                       {(() => {
                         const last = new Date(prefs.whoop_last_sync!);
                         const diffMs = Date.now() - last.getTime();
@@ -323,6 +359,7 @@ export default function SettingsPage() {
                           type="button"
                           className="link-text"
                           onClick={handleWhoopDisconnect}
+                          style={{ color: "rgba(238,240,244,0.35)" }}
                         >
                           Disconnect
                         </button>
