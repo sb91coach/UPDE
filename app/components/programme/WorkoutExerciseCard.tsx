@@ -51,7 +51,7 @@ export default function WorkoutExerciseCard({
   };
 
   return (
-    <div className="polish-card overflow-hidden rounded-xl">
+    <div className="polish-card overflow-hidden rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
       <div className="w-full flex items-center justify-between gap-3 p-4">
         <button
           type="button"
@@ -60,9 +60,13 @@ export default function WorkoutExerciseCard({
           aria-expanded={expanded}
         >
           <div className="min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 truncate">{name}</h3>
+            <h3 className="truncate" style={{ fontSize: 15, fontWeight: 600, color: "rgba(238,240,244,0.92)" }}>
+              {name}
+            </h3>
             {prescription && (
-              <p className="text-sm text-gray-600 truncate mt-0.5">{prescription}</p>
+              <p className="truncate mt-0.5" style={{ fontSize: 13, color: "rgba(238,240,244,0.6)" }}>
+                {prescription}
+              </p>
             )}
           </div>
           <span className="flex-shrink-0 text-gray-400 text-lg" aria-hidden>
@@ -73,8 +77,8 @@ export default function WorkoutExerciseCard({
           href={`https://www.youtube.com/results?search_query=${encodeURIComponent(name + " technique 30 seconds")}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-shrink-0 flex items-center text-gray-400 hover:text-gray-600"
-          style={{ fontSize: 14 }}
+          className="flex-shrink-0 flex items-center"
+          style={{ fontSize: 14, color: "rgba(238,240,244,0.35)" }}
           aria-label={`YouTube: ${name} technique`}
           onClick={(e) => e.stopPropagation()}
         >
@@ -83,39 +87,52 @@ export default function WorkoutExerciseCard({
       </div>
 
       {expanded && (
-        <div className="px-4 pb-4 pt-0 border-t border-gray-100 space-y-3">
-          {/* Video/demo placeholder */}
-          <div>
+        <div className="space-y-3" style={{ padding: "0 16px 16px", paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
+          {/* Video/demo link */}
+          <div style={{ fontSize: 12 }}>
             <button
               type="button"
               onClick={() => onPlayDemo?.(name, demoUrl)}
-              className="w-full h-10 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center gap-2 text-gray-600 font-medium text-sm"
               aria-label={`Video demo for ${name}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: 0,
+                background: "transparent",
+                border: "none",
+                color: "rgba(0,201,160,0.8)",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
             >
-              <span className="text-lg" aria-hidden>▶</span>
+              <span aria-hidden>▶</span>
               <span>{demoUrl ? "Watch demo" : "Video demo"}</span>
             </button>
           </div>
 
           {prescription && (
-            <p className="text-sm text-gray-600">Prescription: {prescription}</p>
+            <p style={{ fontSize: 13, color: "rgba(238,240,244,0.6)", margin: 0 }}>Prescription: {prescription}</p>
           )}
           {load != null && load !== "" && (
-            <p className="text-sm text-gray-600">Load: {load}</p>
+            <p style={{ fontSize: 13, color: "rgba(238,240,244,0.6)", margin: 0 }}>Load: {load}</p>
           )}
           {notes != null && notes !== "" && (
             <div className="pl-3 border-l-2 border-blue-200 py-1">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Coaching notes</p>
-              <p className="text-sm text-gray-700">{notes}</p>
+              <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4, color: "rgba(238,240,244,0.35)" }}>
+                Coaching notes
+              </p>
+              <p style={{ fontSize: 13, color: "rgba(238,240,244,0.6)", margin: 0 }}>{notes}</p>
             </div>
           )}
           {rest != null && rest !== "" && (
-            <p className="text-xs text-gray-500">Rest: {rest}</p>
+            <p style={{ fontSize: 12, color: "rgba(238,240,244,0.35)", margin: 0 }}>Rest: {rest}</p>
           )}
 
           {setCount > 0 && (
             <>
-              <p className="text-sm text-gray-500">Set logging</p>
+              <p style={{ fontSize: 13, color: "rgba(238,240,244,0.35)", margin: 0 }}>Set logging</p>
               <SetTracker
                 sets={setCount}
                 exerciseKey={exerciseKey}
@@ -135,7 +152,17 @@ export default function WorkoutExerciseCard({
                 <button
                   type="button"
                   onClick={() => setShowRestTimer(true)}
-                  className="w-full h-10 rounded-lg font-medium border border-gray-200 bg-gray-50 text-gray-700"
+                  style={{
+                    width: "100%",
+                    height: 40,
+                    borderRadius: 10,
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(255,255,255,0.04)",
+                    color: "rgba(238,240,244,0.9)",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                  }}
                 >
                   Rest Timer
                 </button>

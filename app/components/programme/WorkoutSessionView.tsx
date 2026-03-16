@@ -56,7 +56,7 @@ export default function WorkoutSessionView({
 
   if (exercises.length === 0) {
     return (
-      <div className="mobile-polish p-6 text-center text-gray-600">
+      <div className="mobile-polish p-6 text-center" style={{ color: "rgba(238,240,244,0.6)" }}>
         <p>No exercises in this session. Select a day below to view the programme.</p>
       </div>
     );
@@ -94,17 +94,48 @@ export default function WorkoutSessionView({
       ) : (
         <>
           <div className="space-y-4">
-            <p className="text-sm font-semibold text-gray-700">
+            <p style={{ fontSize: 14, fontWeight: 600, color: "rgba(238,240,244,0.9)", margin: 0 }}>
               Exercise {currentIndex + 1} of {count}
             </p>
-            <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden" role="progressbar" aria-valuenow={currentIndex + 1} aria-valuemin={1} aria-valuemax={count} aria-label={`Exercise ${currentIndex + 1} of ${count}`}>
-              <div className="h-full bg-blue-600 transition-[width] duration-200" style={{ width: `${((currentIndex + 1) / count) * 100}%` }} />
+            <div
+              className="w-full overflow-hidden"
+              style={{
+                height: 6,
+                borderRadius: 9999,
+                background: "rgba(255,255,255,0.06)",
+              }}
+              role="progressbar"
+              aria-valuenow={currentIndex + 1}
+              aria-valuemin={1}
+              aria-valuemax={count}
+              aria-label={`Exercise ${currentIndex + 1} of ${count}`}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  borderRadius: 9999,
+                  background: "linear-gradient(90deg,#0A84FF,#00c9a0)",
+                  width: `${((currentIndex + 1) / count) * 100}%`,
+                  transition: "width 0.2s ease",
+                }}
+              />
             </div>
             <div className="flex items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
-                className="h-10 px-4 rounded-lg border border-gray-200 bg-white text-gray-700 font-medium disabled:opacity-40"
+                style={{
+                  height: 40,
+                  padding: "0 16px",
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "rgba(255,255,255,0.04)",
+                  color: "rgba(238,240,244,0.9)",
+                  fontWeight: 500,
+                  fontSize: 14,
+                  cursor: currentIndex === 0 ? "default" : "pointer",
+                  opacity: currentIndex === 0 ? 0.4 : 1,
+                }}
                 disabled={currentIndex === 0}
               >
                 ← Previous
@@ -112,7 +143,18 @@ export default function WorkoutSessionView({
               <button
                 type="button"
                 onClick={() => setCurrentIndex((i) => Math.min(count - 1, i + 1))}
-                className="h-10 px-4 rounded-lg border border-gray-200 bg-white text-gray-700 font-medium disabled:opacity-40"
+                style={{
+                  height: 40,
+                  padding: "0 16px",
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "rgba(255,255,255,0.04)",
+                  color: "rgba(238,240,244,0.9)",
+                  fontWeight: 500,
+                  fontSize: 14,
+                  cursor: currentIndex === count - 1 ? "default" : "pointer",
+                  opacity: currentIndex === count - 1 ? 0.4 : 1,
+                }}
                 disabled={currentIndex === count - 1}
               >
                 Next →
@@ -134,13 +176,29 @@ export default function WorkoutSessionView({
           {/* Sticky footer - large touch targets */}
           <div
             className="fixed bottom-0 left-0 right-0 z-[9000] flex items-center justify-around gap-2 p-4 pt-3 bg-white border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] safe-area-pb"
-            style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+            style={{
+              paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+              background: "rgba(10,12,18,0.98)",
+              borderTop: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 -4px 20px rgba(0,0,0,0.6)",
+            }}
           >
             <button
               type="button"
               onClick={() => setCurrentIndex((i) => Math.min(count - 1, i + 1))}
               disabled={currentIndex === count - 1}
-              className="flex-1 h-12 rounded-xl font-medium bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-40 transition-colors"
+              style={{
+                flex: 1,
+                height: 48,
+                borderRadius: 14,
+                background: "linear-gradient(135deg,#0A84FF,#7B61FF)",
+                border: "none",
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: 15,
+                opacity: currentIndex === count - 1 ? 0.4 : 1,
+                cursor: currentIndex === count - 1 ? "default" : "pointer",
+              }}
             >
               Next Exercise
             </button>
@@ -151,7 +209,17 @@ export default function WorkoutSessionView({
                 <button
                   type="button"
                   onClick={() => setGlobalRestVisible(true)}
-                  className="h-10 px-4 rounded-lg font-medium border border-gray-200 bg-white text-gray-700"
+                  style={{
+                    height: 40,
+                    padding: "0 16px",
+                    borderRadius: 10,
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(255,255,255,0.04)",
+                    color: "rgba(238,240,244,0.9)",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                  }}
                 >
                   Rest Timer
                 </button>
@@ -160,7 +228,17 @@ export default function WorkoutSessionView({
             <button
               type="button"
               onClick={() => { setWorkoutModeState(false); onFinishWorkout?.(); }}
-              className="flex-1 h-12 rounded-xl font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+              style={{
+                flex: 1,
+                height: 48,
+                borderRadius: 14,
+                background: "#00c9a0",
+                border: "none",
+                color: "#0b1120",
+                fontWeight: 700,
+                fontSize: 15,
+                cursor: "pointer",
+              }}
             >
               Finish Workout
             </button>

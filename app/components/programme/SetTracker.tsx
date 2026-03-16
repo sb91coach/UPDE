@@ -124,22 +124,59 @@ export default function SetTracker({
   if (total === 0) return null;
 
   return (
-    <div className="setTrackerRoot mt-4 pt-4 border-t border-gray-100 space-y-3">
+    <div
+      className="setTrackerRoot"
+      style={{
+        marginTop: 16,
+        paddingTop: 12,
+        borderTop: "1px solid rgba(255,255,255,0.08)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
       {rows.map((row, i) => (
         <div
           key={exerciseKey ? `${exerciseKey}-${i}` : i}
-          className={`flex flex-wrap items-center gap-2 rounded-lg w-full p-3 ${
-            row.completed ? "bg-emerald-50 border border-emerald-200" : "bg-gray-50 border border-gray-100"
-          }`}
+          style={{
+            display: "grid",
+            gridTemplateColumns: showRpe ? "auto 1fr 1fr 1fr auto" : "auto 1fr 1fr auto",
+            gap: 8,
+            alignItems: "center",
+            width: "100%",
+            padding: 10,
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+          }}
         >
-          <span className="text-sm font-semibold text-gray-700 min-w-[48px]">Set {i + 1}</span>
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: "rgba(238,240,244,0.4)",
+              minWidth: 44,
+            }}
+          >
+            Set {i + 1}
+          </span>
           <input
             type="text"
             inputMode="numeric"
             placeholder="Reps"
             value={row.reps}
             onChange={(e) => setReps(i, e.target.value)}
-            className="w-16 h-10 px-2 rounded-lg border border-gray-200 bg-white text-gray-900 text-base text-center"
+            style={{
+              width: "100%",
+              height: 40,
+              padding: "10px 12px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.1)",
+              background: "rgba(255,255,255,0.06)",
+              color: "rgba(238,240,244,0.9)",
+              fontSize: 14,
+              textAlign: "center",
+            }}
             aria-label={`Set ${i + 1} reps`}
           />
           <input
@@ -148,7 +185,17 @@ export default function SetTracker({
             placeholder={unit}
             value={row.weight}
             onChange={(e) => setWeight(i, e.target.value)}
-            className="flex-1 min-w-0 h-10 px-3 rounded-lg border border-gray-200 bg-white text-gray-900 text-base text-center"
+            style={{
+              width: "100%",
+              height: 40,
+              padding: "10px 12px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.1)",
+              background: "rgba(255,255,255,0.06)",
+              color: "rgba(238,240,244,0.9)",
+              fontSize: 14,
+              textAlign: "center",
+            }}
             aria-label={`Set ${i + 1} weight`}
           />
           {showRpe && (
@@ -158,14 +205,35 @@ export default function SetTracker({
               placeholder="RPE"
               value={row.rpe}
               onChange={(e) => setRpe(i, e.target.value)}
-              className="w-14 h-10 px-2 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm text-center"
+              style={{
+                width: "100%",
+                height: 40,
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(255,255,255,0.06)",
+                color: "rgba(238,240,244,0.9)",
+                fontSize: 13,
+                textAlign: "center",
+              }}
               aria-label={`Set ${i + 1} RPE`}
             />
           )}
           <button
             type="button"
-            className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-full border-2 cursor-pointer transition-colors border-gray-300 bg-white text-gray-400 hover:border-emerald-400 hover:text-emerald-600"
-            style={row.completed ? { background: "#10b981", borderColor: "#10b981", color: "#fff" } : undefined}
+            style={{
+              height: 40,
+              width: 40,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "999px",
+              border: row.completed ? "2px solid #00c9a0" : "2px solid rgba(255,255,255,0.35)",
+              background: row.completed ? "#00c9a0" : "transparent",
+              color: row.completed ? "#0b1120" : "rgba(238,240,244,0.7)",
+              cursor: "pointer",
+            }}
             onClick={() => setCompleted(i, !row.completed)}
             aria-label={row.completed ? `Set ${i + 1} completed` : `Mark set ${i + 1} complete`}
           >

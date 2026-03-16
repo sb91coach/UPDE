@@ -311,7 +311,7 @@ export default function AthleteHomeDashboard() {
           display: flex;
           flex-direction: column;
           gap: 10px;
-          padding: 16px 16px 120px;
+          padding: 16px 16px 140px;
         }
         .athlete-dashboard-card {
           padding: 16px;
@@ -334,27 +334,54 @@ export default function AthleteHomeDashboard() {
         }
         .readiness-body {
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
           align-items: center;
           gap: 16px;
         }
-        .readiness-pills {
+        .readiness-ring-wrap {
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .readiness-metrics {
+          flex: 1;
           display: flex;
           flex-direction: column;
-          align-items: flex-start;
-          gap: 6px;
-          width: 100%;
+          gap: 10px;
         }
-        .readiness-pill {
-          background: rgba(255,255,255,0.05);
-          border-radius: 20px;
-          padding: 4px 10px;
-          font-size: 12px;
+        .readiness-metric-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 13px;
+          color: rgba(238,240,244,0.85);
+          margin-bottom: 4px;
+        }
+        .readiness-metric-label {
+          color: rgba(238,240,244,0.6);
+        }
+        .readiness-metric-value {
+          font-weight: 600;
           color: rgba(238,240,244,0.95);
         }
+        .readiness-metric-bar {
+          width: 100%;
+          height: 6px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.06);
+          overflow: hidden;
+        }
+        .readiness-metric-fill {
+          height: 100%;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #0A84FF, #00c9a0);
+        }
         .readiness-programme {
-          text-align: center;
+          border-top: 1px solid rgba(255,255,255,0.06);
+          padding-top: 12px;
           margin-top: 12px;
+          text-align: center;
         }
         .session-meta-pills {
           display: flex;
@@ -375,10 +402,9 @@ export default function AthleteHomeDashboard() {
           gap: 6px;
         }
         .session-exercise-row {
-          display: grid;
-          grid-template-columns: 1fr auto auto;
+          display: flex;
+          justify-content: space-between;
           align-items: center;
-          gap: 8px;
           background: rgba(255,255,255,0.04);
           border-radius: 10px;
           padding: 9px 12px;
@@ -400,8 +426,7 @@ export default function AthleteHomeDashboard() {
           align-items: center;
           color: rgba(238,240,244,0.3);
           font-size: 14px;
-          margin-left: 4px;
-          white-space: nowrap;
+          margin-left: 6px;
         }
         .weekly-trend {
           display: flex;
@@ -424,8 +449,16 @@ export default function AthleteHomeDashboard() {
           .hero-card-meta {
             width: 100%;
           }
+          .readiness-body {
+            flex-direction: row;
+            align-items: flex-start;
+          }
+          .readiness-ring-wrap {
+            transform: scale(0.92);
+            transform-origin: top left;
+          }
           .session-exercise-name {
-            max-width: 140px;
+            max-width: 60%;
           }
         }
         @media (min-width: 640px) {
@@ -497,26 +530,37 @@ export default function AthleteHomeDashboard() {
         >
           <div style={LABEL_STYLE}>Readiness Score</div>
           <div className="readiness-body">
-            <ReadinessRing score={readiness} />
-            <div className="readiness-pills">
+            <div className="readiness-ring-wrap">
+              <ReadinessRing score={readiness} />
+            </div>
+            <div className="readiness-metrics">
               {[
                 { label: "Recovery", value: sleepScore },
                 { label: "Load", value: fatigueScore },
                 { label: "Sentiment", value: Math.round(readiness) },
               ].map(({ label, value }) => (
-                <div key={label} className="readiness-pill">
-                  {label} {Math.round(value)}
+                <div key={label}>
+                  <div className="readiness-metric-row">
+                    <span className="readiness-metric-label">{label}</span>
+                    <span className="readiness-metric-value">{Math.round(value)}</span>
+                  </div>
+                  <div className="readiness-metric-bar">
+                    <div
+                      className="readiness-metric-fill"
+                      style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
-            <div className="readiness-programme">
-              <p style={{ fontSize: 11, color: "rgba(238,240,244,0.55)", margin: "0 0 4px" }}>
-                Your programme
-              </p>
-              <p style={{ fontSize: 16, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: 0 }}>
-                {profile?.archetype ?? "Athlete"} · {getPhase(weekNum)}
-              </p>
-            </div>
+          </div>
+          <div className="readiness-programme">
+            <p style={{ fontSize: 11, color: "rgba(238,240,244,0.55)", margin: "0 0 4px" }}>
+              Your programme
+            </p>
+            <p style={{ fontSize: 16, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: 0 }}>
+              {profile?.archetype ?? "Athlete"} · {getPhase(weekNum)}
+            </p>
           </div>
         </section>
 

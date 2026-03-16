@@ -17,20 +17,34 @@ export default function SessionHeader({
 }: SessionHeaderProps) {
   return (
     <header className="polish-card space-y-3">
-      <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-      <div className="space-y-1 text-sm text-gray-600">
+      <h2 style={{ fontSize: 20, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: 0 }}>{title}</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 14, color: "rgba(238,240,244,0.6)" }}>
         {duration != null && duration !== "" && (
-          <p><span className="text-gray-500">Duration:</span> {duration}</p>
+          <p style={{ margin: 0 }}>
+            <span style={{ color: "rgba(238,240,244,0.35)" }}>Duration:</span> {duration}
+          </p>
         )}
         {focus != null && focus !== "" && (
-          <p><span className="text-gray-500">Focus:</span> {focus}</p>
+          <p style={{ margin: 0 }}>
+            <span style={{ color: "rgba(238,240,244,0.35)" }}>Focus:</span> {focus}
+          </p>
         )}
       </div>
       {onStartWorkout && (
         <button
           type="button"
           onClick={onStartWorkout}
-          className="h-12 w-full rounded-xl font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors active:scale-[0.98]"
+          style={{
+            height: 52,
+            width: "100%",
+            borderRadius: 14,
+            fontWeight: 700,
+            fontSize: 15,
+            background: "linear-gradient(135deg,#0A84FF,#7B61FF)",
+            color: "#ffffff",
+            border: "none",
+            cursor: "pointer",
+          }}
         >
           {startWorkoutLabel}
         </button>
