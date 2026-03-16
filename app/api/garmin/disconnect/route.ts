@@ -1,7 +1,7 @@
-import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { NextResponse } from "next/server";
+import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
-export async function POST() {
+export async function DELETE() {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -17,9 +17,11 @@ export async function POST() {
     .maybeSingle();
 
   const current = (profile?.user_preferences as Record<string, unknown>) ?? {};
-  const rest = { ...current };
-  delete (rest as Record<string, unknown>).garmin_user_id;
-  const next = { ...rest, garmin_connected: false };
+  const next: Record<string, unknown> = { ...current };
+  delete next.garmin_access_token;
+  delete next.garmin_access_secret;
+  delete next.garmin_user_id;
+  next.garmin_connected = false;
 
   const { error } = await supabase
     .from("profiles")
@@ -29,5 +31,5 @@ export async function POST() {
   if (error) {
     return NextResponse.json({ error }, { status: 500 });
   }
-  return NextResponse.json({ connected: false });
+  return NextResponse.json({ disconnected: true }, { status: 200 });
 }

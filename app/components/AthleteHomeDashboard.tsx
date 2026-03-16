@@ -37,6 +37,7 @@ type ProfileData = {
   focus?: string | null;
   user_preferences?: {
     whoop_connected?: boolean;
+    garmin_connected?: boolean;
   } | null;
 };
 
@@ -225,6 +226,8 @@ export default function AthleteHomeDashboard() {
   const [loading, setLoading] = useState(true);
   const whoopConnected =
     (profile?.user_preferences as { whoop_connected?: boolean } | undefined)?.whoop_connected ?? false;
+  const garminConnected =
+    (profile?.user_preferences as { garmin_connected?: boolean } | undefined)?.garmin_connected ?? false;
 
   useEffect(() => {
     let mounted = true;
@@ -279,6 +282,17 @@ export default function AthleteHomeDashboard() {
       cancelled = true;
     };
   }, [whoopConnected]);
+
+  useEffect(() => {
+    if (!garminConnected) return;
+    (async () => {
+      try {
+        await fetch("/api/garmin/sync", { method: "GET" });
+      } catch {
+        // ignore
+      }
+    })();
+  }, [garminConnected]);
 
   if (loading) {
     return (

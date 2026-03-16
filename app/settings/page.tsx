@@ -15,6 +15,7 @@ type UserPreferences = {
 export default function SettingsPage() {
   const [prefs, setPrefs] = useState<UserPreferences | null>(null);
   const [loadingPrefs, setLoadingPrefs] = useState(true);
+  const [garminSyncing, setGarminSyncing] = useState(false);
   const [whoopSyncing, setWhoopSyncing] = useState(false);
 
   useEffect(() => {
@@ -43,9 +44,28 @@ export default function SettingsPage() {
     };
   }, []);
 
+  const handleGarminSync = async () => {
+    setGarminSyncing(true);
+    try {
+      await fetch("/api/garmin/sync");
+      setPrefs((prev) => ({
+        ...(prev ?? {}),
+        garmin_last_sync: new Date().toISOString(),
+      }));
+    } catch {
+      // ignore
+    } finally {
+      setGarminSyncing(false);
+    }
+  };
+
   const handleGarminDisconnect = async () => {
-    await fetch("/api/garmin/disconnect", { method: "POST" });
-    setPrefs((prev) => ({ ...(prev ?? {}), garmin_connected: false }));
+    await fetch("/api/garmin/disconnect", { method: "DELETE" }).catch(() => {});
+    setPrefs((prev) => ({
+      ...(prev ?? {}),
+      garmin_connected: false,
+      garmin_last_sync: undefined,
+    }));
   };
 
   const handleWhoopSync = async () => {
@@ -201,11 +221,18 @@ export default function SettingsPage() {
               {/* Garmin */}
               <div className="device-card">
                 <div className="device-main">
-                  <div className="device-title">Garmin</div>
-                  <div className="device-sub">Activity, HRV, Sleep, Body Battery</div>
-                  {prefs?.garmin_last_sync && (
+                  <div className="device-title" style={{ fontWeight: 600 }}>
+                    Garmin
+                  </div>
+                  <div className="device-sub">HRV · Sleep · Stress · Daily Activity</div>
+                  {prefs?.garmin_last_sync && prefs.garmin_connected && (
                     <div className="device-meta">
-                      Last sync: {new Date(prefs.garmin_last_sync).toLocaleString()}
+                      {(() => {
+                        const last = new Date(prefs.garmin_last_sync!);
+                        const diffMs = Date.now() - last.getTime();
+                        const mins = Math.max(0, Math.round(diffMs / 60000));
+                        return `Last sync: ${mins} min${mins === 1 ? "" : "s"} ago`;
+                      })()}
                     </div>
                   )}
                 </div>
@@ -213,13 +240,23 @@ export default function SettingsPage() {
                   {prefs?.garmin_connected ? (
                     <>
                       <span className="connected-pill">Connected</span>
-                      <button
-                        type="button"
-                        className="link-text"
-                        onClick={handleGarminDisconnect}
-                      >
-                        Disconnect
-                      </button>
+                      <div className="whoop-actions-row">
+                        <button
+                          type="button"
+                          className="whoop-sync-btn"
+                          onClick={handleGarminSync}
+                          disabled={garminSyncing}
+                        >
+                          {garminSyncing ? "Syncing..." : "Sync Now"}
+                        </button>
+                        <button
+                          type="button"
+                          className="link-text"
+                          onClick={handleGarminDisconnect}
+                        >
+                          Disconnect
+                        </button>
+                      </div>
                     </>
                   ) : (
                     <button
