@@ -41,7 +41,6 @@ const CARD_STYLE: React.CSSProperties = {
   background: "rgba(255,255,255,0.04)",
   border: "1px solid rgba(255,255,255,0.07)",
   borderRadius: 20,
-  padding: 20,
 };
 
 const LABEL_STYLE: React.CSSProperties = {
@@ -143,8 +142,8 @@ function getPhase(currentWeek: number): string {
 }
 
 function ReadinessRing({ score }: { score: number }) {
-  const size = 160;
-  const r = 64;
+  const size = 120;
+  const r = 50;
   const circumference = 2 * Math.PI * r;
   const fill = (score / 100) * circumference;
   const cx = size / 2;
@@ -305,22 +304,153 @@ export default function AthleteHomeDashboard() {
 
   return (
     <div className="athlete-dashboard-root">
-      <style>{`
+      <style jsx>{`
         .athlete-dashboard-root {
           max-width: 860px;
           margin: 0 auto;
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-          padding: 0 16px 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 16px 16px 120px;
         }
-        @media (min-width: 640px) {
-          .athlete-dashboard-root {
-            grid-template-columns: repeat(3, 1fr);
+        .athlete-dashboard-card {
+          padding: 16px;
+        }
+        .hero-card {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+        .hero-card-meta {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .dash-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+        .readiness-body {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+        }
+        .readiness-pills {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 6px;
+          width: 100%;
+        }
+        .readiness-pill {
+          background: rgba(255,255,255,0.05);
+          border-radius: 20px;
+          padding: 4px 10px;
+          font-size: 12px;
+          color: rgba(238,240,244,0.95);
+        }
+        .readiness-programme {
+          text-align: center;
+          margin-top: 12px;
+        }
+        .session-meta-pills {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-bottom: 14px;
+        }
+        .session-meta-pill {
+          font-size: 11px;
+          padding: 4px 10px;
+          border-radius: 8px;
+          background: rgba(255,255,255,0.06);
+          color: rgba(238,240,244,0.55);
+        }
+        .session-exercises {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .session-exercise-row {
+          display: grid;
+          grid-template-columns: 1fr auto auto;
+          align-items: center;
+          gap: 8px;
+          background: rgba(255,255,255,0.04);
+          border-radius: 10px;
+          padding: 9px 12px;
+          font-size: 13px;
+          color: rgba(238,240,244,0.95);
+        }
+        .session-exercise-name {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .session-exercise-sets {
+          font-size: 12px;
+          color: rgba(238,240,244,0.55);
+          white-space: nowrap;
+        }
+        .session-exercise-video {
+          display: flex;
+          align-items: center;
+          color: rgba(238,240,244,0.3);
+          font-size: 14px;
+          margin-left: 4px;
+          white-space: nowrap;
+        }
+        .weekly-trend {
+          display: flex;
+          justify-content: space-between;
+          gap: 4px;
+        }
+        .weekly-trend-col {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+        }
+        .capacity-card-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        @media (max-width: 639px) {
+          .hero-card-meta {
+            width: 100%;
+          }
+          .session-exercise-name {
+            max-width: 140px;
           }
         }
-        .athlete-dashboard-full-width {
-          grid-column: 1 / -1;
+        @media (min-width: 640px) {
+          .athlete-dashboard-card {
+            padding: 20px;
+          }
+          .hero-card {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+          }
+          .readiness-body {
+            align-items: center;
+          }
+          .readiness-pills {
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+          }
+          .dash-grid {
+            grid-template-columns: 1fr 1fr;
+          }
         }
         .perf-dashboard-cta:hover {
           background: rgba(255,255,255,0.09) !important;
@@ -328,8 +458,8 @@ export default function AthleteHomeDashboard() {
       `}</style>
 
       {/* Hero — full width */}
-      <section style={{ ...CARD_STYLE, gridColumn: "1 / -1", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-        <div>
+      <section className="athlete-dashboard-card hero-card" style={CARD_STYLE}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: 0, marginBottom: 4 }}>
             {getGreeting()}, {displayName}
           </h1>
@@ -337,7 +467,7 @@ export default function AthleteHomeDashboard() {
             {getDateLabel()}
           </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="hero-card-meta">
           <span
             style={{
               width: 10,
@@ -355,109 +485,69 @@ export default function AthleteHomeDashboard() {
         </div>
       </section>
 
-      {/* Readiness card */}
-      <section
-        style={{
-          ...CARD_STYLE,
-          background: "radial-gradient(ellipse at 50% 30%, rgba(10,132,255,0.08) 0%, rgba(10,12,18,0) 70%), rgba(255,255,255,0.04)",
-        }}
-      >
-        <div style={LABEL_STYLE}>Readiness Score</div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-          <ReadinessRing score={readiness} />
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
-            {[
-              { label: "Recovery", value: sleepScore },
-              { label: "Load", value: fatigueScore },
-              { label: "Sentiment", value: Math.round(readiness) },
-            ].map(({ label, value }) => (
-              <div
-                key={label}
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  borderRadius: 20,
-                  padding: "4px 10px",
-                  fontSize: 12,
-                  color: "rgba(238,240,244,0.95)",
-                }}
-              >
-                {label} {Math.round(value)}
-              </div>
-            ))}
+      {/* Readiness + Today session grid */}
+      <div className="dash-grid">
+        {/* Readiness card */}
+        <section
+          className="athlete-dashboard-card"
+          style={{
+            ...CARD_STYLE,
+            background: "radial-gradient(ellipse at 50% 30%, rgba(10,132,255,0.08) 0%, rgba(10,12,18,0) 70%), rgba(255,255,255,0.04)",
+          }}
+        >
+          <div style={LABEL_STYLE}>Readiness Score</div>
+          <div className="readiness-body">
+            <ReadinessRing score={readiness} />
+            <div className="readiness-pills">
+              {[
+                { label: "Recovery", value: sleepScore },
+                { label: "Load", value: fatigueScore },
+                { label: "Sentiment", value: Math.round(readiness) },
+              ].map(({ label, value }) => (
+                <div key={label} className="readiness-pill">
+                  {label} {Math.round(value)}
+                </div>
+              ))}
+            </div>
+            <div className="readiness-programme">
+              <p style={{ fontSize: 11, color: "rgba(238,240,244,0.55)", margin: "0 0 4px" }}>
+                Your programme
+              </p>
+              <p style={{ fontSize: 16, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: 0 }}>
+                {profile?.archetype ?? "Athlete"} · {getPhase(weekNum)}
+              </p>
+            </div>
           </div>
-          <div style={{ textAlign: "center", marginTop: 4 }}>
-            <p style={{ fontSize: 11, color: "rgba(238,240,244,0.55)", margin: "0 0 4px" }}>
-              Your programme
-            </p>
-            <p style={{ fontSize: 16, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: 0 }}>
-              {profile?.archetype ?? "Athlete"} · {getPhase(weekNum)}
-            </p>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Today's session card */}
-      <section style={CARD_STYLE}>
-        <div style={LABEL_STYLE}>Today&apos;s Session</div>
-        <p style={{ fontSize: 17, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: "0 0 10px" }}>
-          {session.sessionTitle}
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-          <span
-            style={{
-              fontSize: 11,
-              padding: "4px 10px",
-              borderRadius: 8,
-              background: "rgba(255,255,255,0.06)",
-              color: "rgba(238,240,244,0.55)",
-            }}
-          >
-            {session.duration}
-          </span>
-          <span
-            style={{
-              fontSize: 11,
-              padding: "4px 10px",
-              borderRadius: 8,
-              background: "rgba(255,255,255,0.06)",
-              color: "rgba(238,240,244,0.55)",
-            }}
-          >
-            {session.intensity}
-          </span>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {exercises.map((ex) => (
-            <div
-              key={ex.name}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                background: "rgba(255,255,255,0.04)",
-                borderRadius: 10,
-                padding: "9px 12px",
-                fontSize: 13,
-                color: "rgba(238,240,244,0.95)",
-              }}
-            >
-              <span>{ex.name}</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ color: "rgba(238,240,244,0.55)", fontSize: 12 }}>{ex.sets} sets</span>
+        {/* Today's session card */}
+        <section className="athlete-dashboard-card" style={CARD_STYLE}>
+          <div style={LABEL_STYLE}>Today&apos;s Session</div>
+          <p style={{ fontSize: 17, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: "0 0 10px" }}>
+            {session.sessionTitle}
+          </p>
+          <div className="session-meta-pills">
+            <span className="session-meta-pill">{session.duration}</span>
+            <span className="session-meta-pill">{session.intensity}</span>
+          </div>
+          <div className="session-exercises">
+            {exercises.map((ex) => (
+              <div key={ex.name} className="session-exercise-row">
+                <span className="session-exercise-name">{ex.name}</span>
+                <span className="session-exercise-sets">{ex.sets} sets</span>
                 <a
                   href={`https://www.youtube.com/results?search_query=${encodeURIComponent(ex.name + " technique 30 seconds")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: "flex", alignItems: "center", color: "rgba(238,240,244,0.3)", fontSize: 14 }}
+                  className="session-exercise-video"
                   aria-label={`YouTube: ${ex.name} technique`}
                 >
                   ▶
                 </a>
               </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
+            ))}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
           <Link
             href="/programme"
             style={{
@@ -492,26 +582,21 @@ export default function AthleteHomeDashboard() {
               alignItems: "center",
               justifyContent: "center",
             }}
-          >
-            Performance Dashboard
-          </Link>
-        </div>
-      </section>
+            >
+              Performance Dashboard
+            </Link>
+          </div>
+        </section>
+      </div>
 
       {/* Weekly trend — full width */}
-      <section style={{ ...CARD_STYLE, gridColumn: "1 / -1" }}>
+      <section className="athlete-dashboard-card" style={CARD_STYLE}>
         <div style={LABEL_STYLE}>Weekly Readiness Trend</div>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 4 }}>
+        <div className="weekly-trend">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => (
             <div
               key={day}
-              style={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 6,
-              }}
+              className="weekly-trend-col"
             >
               <div
                 style={{
@@ -541,9 +626,9 @@ export default function AthleteHomeDashboard() {
       </section>
 
       {/* Capacity card */}
-      <section style={CARD_STYLE}>
+      <section className="athlete-dashboard-card" style={CARD_STYLE}>
         <div style={LABEL_STYLE}>Capacity Profile</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className="capacity-card-list">
           {[
             { label: "Strength Upper", value: strengthUpper },
             { label: "Strength Lower", value: strengthLower },
@@ -571,7 +656,7 @@ export default function AthleteHomeDashboard() {
       </section>
 
       {/* Sessions card */}
-      <section style={CARD_STYLE}>
+      <section className="athlete-dashboard-card" style={CARD_STYLE}>
         <div style={LABEL_STYLE}>This Week</div>
         <p style={{ fontSize: 36, fontWeight: 800, color: "rgba(238,240,244,0.95)", margin: "0 0 4px" }}>
           {completed}
