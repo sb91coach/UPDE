@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       const oauth = createGarminOAuth();
       const url = String(payload.callbackURL);
       const requestData = { url, method: "GET" as const };
-      const headers = oauth.toHeader(oauth.authorize(requestData));
+      const headers = oauth.toHeader(oauth.authorize(requestData)) as Record<string, string>;
       const resp = await fetch(url, { method: "GET", headers });
       if (resp.ok) {
         payload = await resp.json();
