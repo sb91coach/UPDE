@@ -346,6 +346,29 @@ export default function SettingsPage() {
         )}
 
         <SettingsView />
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingTop: 24,
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            fontSize: 12,
+            color: "rgba(238,240,244,0.3)",
+          }}
+        >
+          <a
+            href="/privacy"
+            style={{
+              color: "rgba(238,240,244,0.4)",
+              textDecoration: "underline",
+            }}
+          >
+            Privacy Policy
+          </a>
+          <span>Version 1.0</span>
+        </div>
       </div>
     </OSLayer>
   );

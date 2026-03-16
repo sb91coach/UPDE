@@ -135,7 +135,22 @@ export default function LoginPage() {
           opacity: 0.85;
           line-height: 1.45;
         }
+        .loginFooter {
+          margin-top: 32px;
+          padding: 24px 16px 0;
+          font-size: 12px;
+          color: rgba(238, 240, 244, 0.25);
+          text-align: center;
+        }
+        .loginFooter a {
+          color: rgba(238, 240, 244, 0.45);
+          text-decoration: underline;
+        }
       `}</style>
+      <div className="loginFooter">
+        By using Performance Pathfinder OS you agree to our{" "}
+        <a href="/privacy">Privacy Policy</a>.
+      </div>
     </AIContainer>
   );
 }
