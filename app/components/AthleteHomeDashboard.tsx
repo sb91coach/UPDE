@@ -35,6 +35,9 @@ type ProfileData = {
   completed_sessions?: number | null;
   current_week?: number | null;
   focus?: string | null;
+  user_preferences?: {
+    whoop_connected?: boolean;
+  } | null;
 };
 
 const CARD_STYLE: React.CSSProperties = {
@@ -220,6 +223,8 @@ export default function AthleteHomeDashboard() {
   const [todaySession, setTodaySession] = useState<TodaySession | null>(null);
   const [sessionsThisWeek, setSessionsThisWeek] = useState<SessionsThisWeek | null>(null);
   const [loading, setLoading] = useState(true);
+  const whoopConnected =
+    (profile?.user_preferences as { whoop_connected?: boolean } | undefined)?.whoop_connected ?? false;
 
   useEffect(() => {
     let mounted = true;
@@ -236,7 +241,7 @@ export default function AthleteHomeDashboard() {
       const { data: profileData } = await supabase
         .from("profiles")
         .select(
-          "name, readiness_score, checkin_readiness, checkin_date, aerobic_score, sleep_score, strength_upper, strength_lower, mobility_score, fatigue_score, momentum, primary_limiter, archetype, deload_active, completed_sessions, current_week, focus"
+          "name, readiness_score, checkin_readiness, checkin_date, aerobic_score, sleep_score, strength_upper, strength_lower, mobility_score, fatigue_score, momentum, primary_limiter, archetype, deload_active, completed_sessions, current_week, focus, user_preferences"
         )
         .eq("id", session.user.id)
         .maybeSingle();
@@ -256,6 +261,24 @@ export default function AthleteHomeDashboard() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!whoopConnected) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/whoop/sync", { method: "GET" });
+        if (!cancelled && !res.ok) {
+          // ignore errors; dashboard can still render
+        }
+      } catch {
+        // ignore network errors
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [whoopConnected]);
 
   if (loading) {
     return (
@@ -488,7 +511,32 @@ export default function AthleteHomeDashboard() {
         .perf-dashboard-cta:hover {
           background: rgba(255,255,255,0.09) !important;
         }
+        .whoop-sync-banner {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 12px;
+          color: rgba(238,240,244,0.6);
+        }
+        .whoop-sync-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          background: #00c9a0;
+          box-shadow: 0 0 8px rgba(0,201,160,0.6);
+          flex-shrink: 0;
+        }
       `}</style>
+
+      {/* Whoop sync banner */}
+      {whoopConnected && (
+        <section className="athlete-dashboard-card" style={CARD_STYLE}>
+          <div className="whoop-sync-banner">
+            <span className="whoop-sync-dot" aria-hidden />
+            <span>Whoop connected — recovery, sleep, and strain are synced automatically.</span>
+          </div>
+        </section>
+      )}
 
       {/* Hero — full width */}
       <section className="athlete-dashboard-card hero-card" style={CARD_STYLE}>
