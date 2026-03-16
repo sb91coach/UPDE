@@ -51,12 +51,46 @@ export default function WorkoutExerciseCard({
   };
 
   return (
-    <div className="polish-card overflow-hidden rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-      <div className="w-full flex items-center justify-between gap-3 p-4">
+    <div
+      className=""
+      style={{
+        background: "rgba(255,255,255,0.05)",
+        border: "1px solid rgba(255,255,255,0.09)",
+        borderRadius: 14,
+        padding: "14px 16px",
+        marginBottom: 8,
+        color: "rgba(238,240,244,0.92)",
+      }}
+    >
+      <div
+        className=""
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
         <button
           type="button"
           onClick={() => setExpanded((e) => !e)}
-          className="flex-1 min-w-0 text-left flex items-center justify-between gap-3 active:opacity-90"
+          className=""
+          style={{
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            color: "rgba(238,240,244,0.92)",
+            fontSize: 15,
+            fontWeight: 600,
+            cursor: "pointer",
+            textAlign: "left",
+          }}
           aria-expanded={expanded}
         >
           <div className="min-w-0">
@@ -69,7 +103,11 @@ export default function WorkoutExerciseCard({
               </p>
             )}
           </div>
-          <span className="flex-shrink-0 text-gray-400 text-lg" aria-hidden>
+          <span
+            className=""
+            aria-hidden
+            style={{ flexShrink: 0, fontSize: 16, color: "rgba(238,240,244,0.55)" }}
+          >
             {expanded ? "▼" : "▶"}
           </span>
         </button>

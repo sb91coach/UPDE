@@ -91,14 +91,35 @@ export default function DayAccordion({
   const allComplete = totalSets > 0 && completedSets >= totalSets;
 
   return (
-    <div className="dayAccordionRoot">
+    <div
+      className=""
+      style={{
+        background: "#0a0c12",
+        color: "rgba(238,240,244,0.9)",
+        marginBottom: 10,
+      }}
+    >
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={expanded}
         aria-controls={`day-content-${dayId}`}
         id={`day-header-${dayId}`}
-        className="dayAccordionHeader"
+        className=""
+        style={{
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.09)",
+          borderRadius: 14,
+          padding: "14px 16px",
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          color: "rgba(238,240,244,0.92)",
+          fontSize: 15,
+          fontWeight: 600,
+          cursor: "pointer",
+        }}
       >
         <span className="dayAccordionHeaderLeft">
           <span className="dayAccordionDot" aria-hidden />
@@ -119,7 +140,12 @@ export default function DayAccordion({
         id={`day-content-${dayId}`}
         role="region"
         aria-labelledby={`day-header-${dayId}`}
-        className={`dayAccordionContent ${expanded ? "dayAccordionContent--open" : ""}`}
+        className=""
+        style={{
+          background: "rgba(255,255,255,0.02)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          padding: "14px 16px",
+        }}
       >
         <div
           className="dayAccordionInner"

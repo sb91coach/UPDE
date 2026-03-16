@@ -14,6 +14,7 @@ import { getMacroLogs } from "@/lib/nutritionStore";
 import { getBodyComposition } from "@/lib/nutritionStore";
 import { PerformanceEngine } from "@/lib/performanceEngine";
 import { subscribe as subscribePerformance } from "@/lib/performanceEvents";
+import FoodScanner from "@/app/components/nutrition/FoodScanner";
 
 function mockMacroSummaries(): MacroSummary[] {
   const last7 = { protein: 82, carbs: 280, fats: 58, calories: 1920 };
@@ -51,6 +52,9 @@ export default function NutritionPage() {
   const [macroLogs, setMacroLogs] = useState<ReturnType<typeof getMacroLogs>>([]);
   const [bodyComposition, setBodyComposition] = useState<ReturnType<typeof getBodyComposition>>(null);
   const [strategicInsights, setStrategicInsights] = useState<string[]>([]);
+  const [recentMeals, setRecentMeals] = useState<any[]>([]);
+  const [loadingMeals, setLoadingMeals] = useState(false);
+  const [mealsError, setMealsError] = useState<string | null>(null);
 
   const refreshMacroLogs = useCallback(() => {
     setMacroLogs(getMacroLogs());
@@ -73,6 +77,59 @@ export default function NutritionPage() {
     });
     return () => unsub();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingMeals(true);
+    setMealsError(null);
+    fetch("/api/nutrition/history")
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((data) => {
+        if (!cancelled) {
+          setRecentMeals(Array.isArray(data) ? data : []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMealsError("Failed to load recent meals.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingMeals(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const formatLoggedAt = (iso: string | null | undefined) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const now = new Date();
+    const sameDay =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday =
+      d.getFullYear() === yesterday.getFullYear() &&
+      d.getMonth() === yesterday.getMonth() &&
+      d.getDate() === yesterday.getDate();
+    const time = d.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    if (sameDay) return `Today ${time}`;
+    if (isYesterday) return `Yesterday ${time}`;
+    return `${d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    })} ${time}`;
+  };
 
   const chartData = useMemo(() => buildChartDataFromLogs(macroLogs), [macroLogs]);
 
@@ -215,6 +272,78 @@ export default function NutritionPage() {
               margin: 0 -20px;
               padding: 0 20px;
             }
+            .meals-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 8px;
+            }
+            .meals-title {
+              font-size: 14px;
+              font-weight: 600;
+              color: rgba(238,240,244,0.9);
+            }
+            .meals-sub {
+              font-size: 12px;
+              color: rgba(238,240,244,0.45);
+            }
+            .meal-list {
+              margin-top: 4px;
+            }
+            .meal-row {
+              background: rgba(255,255,255,0.04);
+              border-radius: 12px;
+              padding: 12px 14px;
+              margin-bottom: 8px;
+            }
+            .meal-row-main {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 10px;
+              margin-bottom: 6px;
+            }
+            .meal-name {
+              font-size: 14px;
+              font-weight: 600;
+              color: rgba(238,240,244,0.9);
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+            .meal-calories {
+              font-size: 14px;
+              font-weight: 600;
+              color: #00c9a0;
+              white-space: nowrap;
+            }
+            .meal-meta-row {
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              gap: 6px;
+            }
+            .meal-pill {
+              padding: 4px 8px;
+              border-radius: 999px;
+              font-size: 11px;
+              color: rgba(238,240,244,0.7);
+              background: rgba(255,255,255,0.06);
+            }
+            .meal-time {
+              font-size: 11px;
+              color: rgba(238,240,244,0.4);
+            }
+            .meals-empty {
+              font-size: 13px;
+              color: rgba(238,240,244,0.35);
+              margin-top: 4px;
+            }
+            .meals-error {
+              font-size: 13px;
+              color: #f97373;
+              margin-top: 4px;
+            }
           `}</style>
 
           <div className="nutrition-card">
@@ -235,6 +364,47 @@ export default function NutritionPage() {
               </ul>
             </div>
           )}
+
+          <div className="nutrition-card">
+            <FoodScanner />
+          </div>
+
+          <div className="nutrition-card">
+            <div className="meals-header">
+              <div className="meals-title">Recent meals</div>
+              {loadingMeals && <div className="meals-sub">Loading…</div>}
+            </div>
+            {mealsError && <div className="meals-error">{mealsError}</div>}
+            {!mealsError && recentMeals.length === 0 && !loadingMeals && (
+              <div className="meals-empty">No meals logged yet.</div>
+            )}
+            <div className="meal-list">
+              {recentMeals.map((m) => (
+                <div key={m.id} className="meal-row">
+                  <div className="meal-row-main">
+                    <div className="meal-name">{m.meal_name}</div>
+                    <div className="meal-calories">
+                      {m.calories != null ? `${m.calories} kcal` : ""}
+                    </div>
+                  </div>
+                  <div className="meal-meta-row">
+                    {m.protein_g != null && (
+                      <span className="meal-pill">P {m.protein_g}g</span>
+                    )}
+                    {m.carbs_g != null && (
+                      <span className="meal-pill">C {m.carbs_g}g</span>
+                    )}
+                    {m.fat_g != null && (
+                      <span className="meal-pill">F {m.fat_g}g</span>
+                    )}
+                    <span className="meal-time">
+                      {formatLoggedAt(m.logged_at)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="nutrition-card">
             <div className="nutrition-placeholder">

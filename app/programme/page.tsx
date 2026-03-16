@@ -843,7 +843,14 @@ export default function ProgrammePage() {
   return (
     <RequireAuth>
       <OSLayer hideBottomNav={workoutMode} isPro={isPro}>
-        <div className="outer">
+        <div
+          className="outer"
+          style={{
+            background: "#0a0c12",
+            minHeight: "100vh",
+            padding: "0 0 120px",
+          }}
+        >
           <div className="desktop-only-nav">
             <ProgrammeNavBar pathname={pathname} />
           </div>

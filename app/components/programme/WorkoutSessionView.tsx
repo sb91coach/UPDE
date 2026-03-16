@@ -175,8 +175,19 @@ export default function WorkoutSessionView({
 
           {/* Sticky footer - large touch targets */}
           <div
-            className="fixed bottom-0 left-0 right-0 z-[9000] flex items-center justify-around gap-2 p-4 pt-3 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] safe-area-pb"
+            className=""
             style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 9000,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-around",
+              gap: 8,
+              padding: "12px 16px",
+              paddingTop: 12,
               paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
               background: "rgba(10,12,18,0.98)",
               borderTop: "1px solid rgba(255,255,255,0.08)",
