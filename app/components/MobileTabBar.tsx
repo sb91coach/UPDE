@@ -176,14 +176,42 @@ export default function MobileTabBar() {
         <div className="mobile-sheet-grid">
           {MENU_ITEMS.map(({ label, href }) => {
             const active = isActive(pathname, href);
+            const baseColor = active ? "#00c9a0" : "rgba(238,240,244,0.4)";
+            const iconBoxStyle: React.CSSProperties = {
+              width: 56,
+              height: 56,
+              borderRadius: 16,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: active ? "rgba(0,201,160,0.12)" : "rgba(255,255,255,0.05)",
+              border: active ? "1px solid #00c9a0" : "1px solid rgba(255,255,255,0.08)",
+              color: baseColor,
+            };
+            const labelStyle: React.CSSProperties = {
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: baseColor,
+            };
             return (
               <Link
                 key={href}
                 href={href}
-                className={`mobile-sheet-grid-item ${active ? "active" : ""}`}
                 onClick={() => setSheetOpen(false)}
+                className={`mobile-sheet-grid-item ${active ? "active" : ""}`}
+                style={{
+                  textDecoration: "none",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  minHeight: 72,
+                }}
               >
-                <div className="mobile-sheet-grid-icon">
+                <div className="mobile-sheet-grid-icon" style={iconBoxStyle}>
                   {label === "Home" && (
                     <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
                       <path
@@ -274,7 +302,9 @@ export default function MobileTabBar() {
                     </svg>
                   )}
                 </div>
-                <div className="mobile-sheet-grid-label">{label}</div>
+                <span className="mobile-sheet-grid-label" style={labelStyle}>
+                  {label}
+                </span>
               </Link>
             );
           })}
