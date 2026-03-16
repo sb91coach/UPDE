@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
@@ -14,22 +15,37 @@ export async function GET(req: Request) {
   }
 
   const clientId = process.env.WHOOP_CLIENT_ID;
-  if (!clientId) {
-    return NextResponse.json({ error: "WHOOP_CLIENT_ID not configured" }, { status: 500 });
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+  if (!clientId || !appUrl) {
+    return NextResponse.json(
+      { error: "WHOOP_CLIENT_ID or NEXT_PUBLIC_APP_URL not configured" },
+      { status: 500 }
+    );
   }
 
-  const url = new URL(req.url);
-  const redirectUri = `${url.origin}/api/whoop/callback`;
+  const redirectUri = `${appUrl}/api/whoop/callback`;
+
+  const state = crypto.randomBytes(8).toString("hex");
 
   const authUrl = new URL(WHOOP_AUTH_URL);
   authUrl.searchParams.set("client_id", clientId);
   authUrl.searchParams.set("redirect_uri", redirectUri);
   authUrl.searchParams.set(
     "scope",
-    "read:recovery read:sleep read:body_measurement read:cycles"
+    "read:recovery read:cycles read:workout read:sleep read:profile read:body_measurement"
   );
   authUrl.searchParams.set("response_type", "code");
+  authUrl.searchParams.set("state", state);
 
-  return NextResponse.redirect(authUrl.toString());
+  const res = NextResponse.redirect(authUrl.toString());
+  res.cookies.set("whoop_oauth_state", state, {
+    httpOnly: true,
+    secure: true,
+    path: "/",
+    maxAge: 600, // 10 minutes
+  });
+
+  return res;
 }
 

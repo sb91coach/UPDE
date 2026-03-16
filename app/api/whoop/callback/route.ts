@@ -1,36 +1,34 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
+import { syncWhoopForUser } from "@/lib/whoopSync";
 
 const WHOOP_TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token";
 
-export async function GET(req: Request) {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export async function GET(req: NextRequest) {
+  const stateFromQuery = req.nextUrl.searchParams.get("state") ?? "";
+  const stateCookie = req.cookies.get("whoop_oauth_state")?.value ?? "";
 
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if (!stateFromQuery || !stateCookie || stateFromQuery !== stateCookie) {
+    return NextResponse.json({ error: "Invalid OAuth state" }, { status: 400 });
   }
 
-  const url = new URL(req.url);
-  const code = url.searchParams.get("code");
-
+  const code = req.nextUrl.searchParams.get("code");
   if (!code) {
     return NextResponse.json({ error: "Missing code" }, { status: 400 });
   }
 
   const clientId = process.env.WHOOP_CLIENT_ID;
   const clientSecret = process.env.WHOOP_CLIENT_SECRET;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-  if (!clientId || !clientSecret) {
+  if (!clientId || !clientSecret || !appUrl) {
     return NextResponse.json(
-      { error: "WHOOP_CLIENT_ID / WHOOP_CLIENT_SECRET not configured" },
+      { error: "WHOOP_CLIENT_ID / WHOOP_CLIENT_SECRET / NEXT_PUBLIC_APP_URL not configured" },
       { status: 500 }
     );
   }
 
-  const redirectUri = `${url.origin}/api/whoop/callback`;
+  const redirectUri = `${appUrl}/api/whoop/callback`;
 
   const tokenResp = await fetch(WHOOP_TOKEN_URL, {
     method: "POST",
@@ -63,12 +61,22 @@ export async function GET(req: Request) {
 
   const accessToken = tokenJson.access_token;
   const refreshToken = tokenJson.refresh_token ?? "";
+  const expiresIn = tokenJson.expires_in ?? 0;
 
   if (!accessToken) {
     return NextResponse.json(
       { error: "Whoop token response missing access_token" },
       { status: 502 }
     );
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
   const { data: profile } = await supabase
@@ -82,6 +90,7 @@ export async function GET(req: Request) {
     ...prefs,
     whoop_access_token: accessToken,
     whoop_refresh_token: refreshToken,
+    whoop_token_expires_at: Date.now() + expiresIn * 1000,
     whoop_connected: true,
   };
 
@@ -90,19 +99,15 @@ export async function GET(req: Request) {
     .update({ user_preferences: nextPrefs })
     .eq("id", user.id);
 
-  // Optionally trigger an initial sync here by calling the sync endpoint server-side.
+  // run initial sync (non-blocking errors)
   try {
-    await fetch(`${url.origin}/api/whoop/sync`, {
-      method: "GET",
-      headers: {
-        Cookie: (req.headers as Headers).get("cookie") ?? "",
-      },
-    });
+    await syncWhoopForUser(user.id);
   } catch {
-    // ignore sync failure; user can sync later
+    // ignore sync failure
   }
 
-  const redirectUrl = new URL("/settings", url.origin);
-  return NextResponse.redirect(redirectUrl);
+  const redirectUrl = new URL("/settings?connected=whoop", appUrl);
+  const res = NextResponse.redirect(redirectUrl.toString());
+  res.cookies.set("whoop_oauth_state", "", { maxAge: 0, path: "/" });
+  return res;
 }
-

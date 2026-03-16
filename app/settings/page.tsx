@@ -9,11 +9,13 @@ type UserPreferences = {
   garmin_connected?: boolean;
   garmin_last_sync?: string;
   whoop_connected?: boolean;
+  whoop_last_sync?: string;
 };
 
 export default function SettingsPage() {
   const [prefs, setPrefs] = useState<UserPreferences | null>(null);
   const [loadingPrefs, setLoadingPrefs] = useState(true);
+  const [whoopSyncing, setWhoopSyncing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,16 +49,27 @@ export default function SettingsPage() {
   };
 
   const handleWhoopSync = async () => {
-    await fetch("/api/whoop/sync").catch(() => {});
+    setWhoopSyncing(true);
+    try {
+      await fetch("/api/whoop/sync");
+      setPrefs((prev) => ({
+        ...(prev ?? {}),
+        whoop_last_sync: new Date().toISOString(),
+      }));
+    } catch {
+      // ignore
+    } finally {
+      setWhoopSyncing(false);
+    }
   };
 
   const handleWhoopDisconnect = async () => {
-    await fetch("/api/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ whoop_connected: false }),
-    }).catch(() => {});
-    setPrefs((prev) => ({ ...(prev ?? {}), whoop_connected: false }));
+    await fetch("/api/whoop/disconnect", { method: "DELETE" }).catch(() => {});
+    setPrefs((prev) => ({
+      ...(prev ?? {}),
+      whoop_connected: false,
+      whoop_last_sync: undefined,
+    }));
   };
 
   return (
@@ -112,6 +125,30 @@ export default function SettingsPage() {
             font-size: 11px;
             color: rgba(238, 240, 244, 0.35);
             margin-top: 4px;
+          }
+          .whoop-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justifyContent: center;
+            border: 1px solid rgba(0, 201, 160, 0.4);
+          }
+          .whoop-actions-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .whoop-sync-btn {
+            border-radius: 10px;
+            padding: 7px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(238, 240, 244, 0.8);
+            cursor: pointer;
           }
           .device-actions {
             display: flex;
@@ -201,27 +238,58 @@ export default function SettingsPage() {
               {/* Whoop */}
               <div className="device-card">
                 <div className="device-main">
-                  <div className="device-title">Whoop</div>
-                  <div className="device-sub">Recovery, HRV, Sleep, Strain</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div className="whoop-icon" aria-hidden>
+                      <svg width="24" height="24" viewBox="0 0 24 24">
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="7"
+                          fill="none"
+                          stroke="#00c9a0"
+                          strokeWidth="1.6"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="device-title" style={{ fontWeight: 600 }}>
+                        Whoop
+                      </div>
+                      <div className="device-sub">Recovery · HRV · Sleep · Strain</div>
+                    </div>
+                  </div>
+                  {prefs?.whoop_last_sync && prefs.whoop_connected && (
+                    <div className="device-meta">
+                      {(() => {
+                        const last = new Date(prefs.whoop_last_sync!);
+                        const diffMs = Date.now() - last.getTime();
+                        const mins = Math.max(0, Math.round(diffMs / 60000));
+                        return `Last sync: ${mins} min${mins === 1 ? "" : "s"} ago`;
+                      })()}
+                    </div>
+                  )}
                 </div>
                 <div className="device-actions">
                   {prefs?.whoop_connected ? (
                     <>
                       <span className="connected-pill">Connected</span>
-                      <button
-                        type="button"
-                        className="connect-btn"
-                        onClick={handleWhoopSync}
-                      >
-                        Sync Now
-                      </button>
-                      <button
-                        type="button"
-                        className="link-text"
-                        onClick={handleWhoopDisconnect}
-                      >
-                        Disconnect
-                      </button>
+                      <div className="whoop-actions-row">
+                        <button
+                          type="button"
+                          className="whoop-sync-btn"
+                          onClick={handleWhoopSync}
+                          disabled={whoopSyncing}
+                        >
+                          {whoopSyncing ? "Syncing..." : "Sync Now"}
+                        </button>
+                        <button
+                          type="button"
+                          className="link-text"
+                          onClick={handleWhoopDisconnect}
+                        >
+                          Disconnect
+                        </button>
+                      </div>
                     </>
                   ) : (
                     <button
