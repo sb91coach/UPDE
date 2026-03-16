@@ -18,7 +18,9 @@ export async function getGarminRequestToken(): Promise<{ token: string; secret: 
   const oauth = createGarminOAuth();
   const url = "https://connectapi.garmin.com/oauth-service/oauth/request_token";
   const requestData = { url, method: "POST" as const };
-  const headers = oauth.toHeader(oauth.authorize(requestData)) as Record<string, string>;
+  const headers = oauth.toHeader(
+    oauth.authorize(requestData)
+  ) as unknown as Record<string, string>;
 
   const res = await fetch(url, {
     method: "POST",
@@ -42,7 +44,9 @@ export async function getGarminAccessToken(
   const url = "https://connectapi.garmin.com/oauth-service/oauth/access_token";
   const requestData = { url, method: "POST" as const };
   const token = { key: requestToken, secret: requestSecret };
-  const headers = oauth.toHeader(oauth.authorize(requestData, token)) as Record<string, string>;
+  const headers = oauth.toHeader(
+    oauth.authorize(requestData, token)
+  ) as unknown as Record<string, string>;
 
   const res = await fetch(url, {
     method: "POST",
@@ -70,6 +74,8 @@ export function signGarminRequest(
   const oauth = createGarminOAuth();
   const requestData = { url, method };
   const token = { key: accessToken, secret: accessSecret };
-  return oauth.toHeader(oauth.authorize(requestData, token)) as Record<string, string>;
+  return oauth.toHeader(
+    oauth.authorize(requestData, token)
+  ) as unknown as Record<string, string>;
 }
 
