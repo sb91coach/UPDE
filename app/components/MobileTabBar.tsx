@@ -107,28 +107,47 @@ export default function MobileTabBar() {
           border-radius: 2px;
           margin: 12px auto 20px;
         }
-        .mobile-sheet-row {
+        .mobile-sheet-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          padding: 16px 20px 24px;
+        }
+        .mobile-sheet-grid-item {
           display: flex;
+          flex-direction: column;
           align-items: center;
-          justify-content: space-between;
-          height: 52px;
-          padding: 0 24px;
-          font-size: 16px;
-          font-weight: 500;
-          color: rgba(238, 240, 244, 0.85);
+          justify-content: center;
+          gap: 6px;
+          min-height: 72px;
           text-decoration: none;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
           cursor: pointer;
         }
-        .mobile-sheet-row:last-child {
-          border-bottom: none;
+        .mobile-sheet-grid-icon {
+          width: 56px;
+          height: 56px;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          color: rgba(238, 240, 244, 0.6);
         }
-        .mobile-sheet-row.active {
+        .mobile-sheet-grid-item.active .mobile-sheet-grid-icon {
+          background: rgba(0, 201, 160, 0.12);
+          border-color: #00c9a0;
           color: #00c9a0;
         }
-        .mobile-sheet-row-arrow {
-          color: rgba(238, 240, 244, 0.2);
-          font-size: 20px;
+        .mobile-sheet-grid-label {
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: rgba(238, 240, 244, 0.4);
+        }
+        .mobile-sheet-grid-item.active .mobile-sheet-grid-label {
+          color: #00c9a0;
         }
       `}</style>
 
@@ -154,17 +173,112 @@ export default function MobileTabBar() {
 
       <div className={`mobile-sheet ${sheetOpen ? "open" : ""}`} role="dialog" aria-modal="true" aria-label="Navigation menu">
         <div className="mobile-sheet-handle" aria-hidden />
-        {MENU_ITEMS.map(({ label, href }) => (
-          <Link
-            key={href}
-            href={href}
-            className={`mobile-sheet-row ${isActive(pathname, href) ? "active" : ""}`}
-            onClick={() => setSheetOpen(false)}
-          >
-            <span>{label}</span>
-            <span className="mobile-sheet-row-arrow" aria-hidden>›</span>
-          </Link>
-        ))}
+        <div className="mobile-sheet-grid">
+          {MENU_ITEMS.map(({ label, href }) => {
+            const active = isActive(pathname, href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`mobile-sheet-grid-item ${active ? "active" : ""}`}
+                onClick={() => setSheetOpen(false)}
+              >
+                <div className="mobile-sheet-grid-icon">
+                  {label === "Home" && (
+                    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
+                      <path
+                        d="M4 11.5L12 4l8 7.5M6.5 10v8.5a1 1 0 0 0 1 1H16.5a1 1 0 0 0 1-1V10"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                      />
+                    </svg>
+                  )}
+                  {label === "Programme" && (
+                    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
+                      <rect x="4" y="4" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <rect x="14" y="4" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <rect x="4" y="14" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <rect x="14" y="14" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                    </svg>
+                  )}
+                  {label === "Calendar" && (
+                    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
+                      <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <path d="M8 3.5V7M16 3.5V7M4 10.5h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                      <rect x="7" y="12.5" width="3" height="3" rx="0.6" stroke="currentColor" strokeWidth="1.4" fill="none" />
+                      <rect x="12" y="12.5" width="3" height="3" rx="0.6" stroke="currentColor" strokeWidth="1.4" fill="none" />
+                    </svg>
+                  )}
+                  {label === "Performance" && (
+                    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
+                      <path
+                        d="M5 19v-5M10 19v-9M15 19V7M20 19v-3"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M4 19.5h16"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  )}
+                  {label === "Nutrition" && (
+                    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
+                      <path
+                        d="M6 18c3 0 7-3 9-9-3 0-7 3-9 9Zm7.5-7.5c.5 3 1.5 5 3.5 7.5"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                      />
+                      <path
+                        d="M5 5.5c1.5 0 3 .5 4 1.5"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  )}
+                  {label === "Strategy" && (
+                    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
+                      <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <path d="M12 5v2M12 17v2M5 12h2M17 12h2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                    </svg>
+                  )}
+                  {label === "Check-In" && (
+                    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
+                      <rect x="5" y="3.5" width="14" height="17" rx="2" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <path d="M9 7h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                      <path d="M9 11l2 2 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                  {label === "Settings" && (
+                    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
+                      <path
+                        d="M10.2 4.5h3.6l.6 2.1 1.9.8 1.9-1.2 2.1 2.1-1.2 1.9.8 1.9 2.1.6v3.6l-2.1.6-.8 1.9 1.2 1.9-2.1 2.1-1.9-1.2-1.9.8-.6 2.1h-3.6l-.6-2.1-1.9-.8-1.9 1.2-2.1-2.1 1.2-1.9-.8-1.9L2.5 15v-3.6l2.1-.6.8-1.9-1.2-1.9 2.1-2.1 1.9 1.2 1.9-.8.6-2.1Z"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                      />
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                    </svg>
+                  )}
+                </div>
+                <div className="mobile-sheet-grid-label">{label}</div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </>
   );
