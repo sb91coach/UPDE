@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
-import { syncWhoopForUser } from "@/lib/whoopSync";
+import { syncWhoopData } from "@/lib/whoopSync";
 
 const WHOOP_TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token";
 
@@ -101,7 +101,12 @@ export async function GET(req: NextRequest) {
 
   // run initial sync (non-blocking errors)
   try {
-    await syncWhoopForUser(user.id);
+    await syncWhoopData(
+      user.id,
+      accessToken,
+      refreshToken,
+      Date.now() + expiresIn * 1000
+    );
   } catch {
     // ignore sync failure
   }
