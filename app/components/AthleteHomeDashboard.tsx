@@ -153,7 +153,7 @@ function ReadinessRing({ score }: { score: number }) {
   const cx = size / 2;
   const cy = size / 2;
   return (
-    <div style={{ position: "relative", width: size, height: size }}>
+    <div className="readiness-ring" style={{ position: "relative", width: size, height: size }}>
       <svg
         width={size}
         height={size}
@@ -205,15 +205,9 @@ function ReadinessRing({ score }: { score: number }) {
           justifyContent: "center",
         }}
       >
-        <span style={{ fontSize: 42, fontWeight: 700, color: "rgba(238,240,244,0.95)" }}>
-          {Math.round(score)}
-        </span>
-        <span style={{ fontSize: 11, color: "rgba(238,240,244,0.55)", marginTop: 2 }}>
-          out of 100
-        </span>
-        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "rgba(238,240,244,0.28)", marginTop: 2, textTransform: "uppercase" }}>
-          data-driven composite
-        </span>
+        <span className="readiness-ring-score">{Math.round(score)}</span>
+        <span className="readiness-ring-outof">out of 100</span>
+        <span className="readiness-ring-label">data-driven composite</span>
       </div>
     </div>
   );
@@ -359,6 +353,14 @@ export default function AthleteHomeDashboard() {
           align-items: flex-start;
           gap: 8px;
         }
+        .hero-greeting {
+          margin: 0;
+          color: #ffffff;
+        }
+        .hero-date {
+          margin: 0;
+          color: rgba(238, 240, 244, 0.35);
+        }
         .hero-card-meta {
           display: flex;
           align-items: center;
@@ -368,6 +370,26 @@ export default function AthleteHomeDashboard() {
           display: grid;
           grid-template-columns: 1fr;
           gap: 10px;
+        }
+        .readiness-ring-score {
+          font-size: 42px;
+          font-weight: 700;
+          color: rgba(238, 240, 244, 0.95);
+          letter-spacing: -1px;
+          line-height: 1;
+        }
+        .readiness-ring-outof {
+          font-size: 11px;
+          color: rgba(238, 240, 244, 0.55);
+          margin-top: 2px;
+        }
+        .readiness-ring-label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          color: rgba(238, 240, 244, 0.28);
+          margin-top: 2px;
+          text-transform: uppercase;
         }
         .readiness-body {
           display: flex;
@@ -498,7 +520,7 @@ export default function AthleteHomeDashboard() {
             max-width: 60%;
           }
         }
-        @media (min-width: 640px) {
+        @media (min-width: 769px) {
           .athlete-dashboard-card {
             padding: 20px;
           }
@@ -520,6 +542,128 @@ export default function AthleteHomeDashboard() {
           }
           .dash-grid {
             grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        /* ======================================================
+           MOBILE PREMIUM POLISH (max-width: 768px)
+        ======================================================= */
+        @media (max-width: 768px) {
+          /* Single column stack (no two-column grid) */
+          .dash-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+          }
+
+          /* Global card treatment (mobile only) */
+          .athlete-dashboard-card {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.07) !important;
+            border-radius: 14px !important;
+            padding: 18px !important;
+          }
+
+          /* Hero */
+          .hero-card {
+            padding: 20px 18px !important;
+          }
+          .hero-greeting {
+            font-size: 20px !important;
+            font-weight: 700 !important;
+            letter-spacing: -0.4px !important;
+            color: #ffffff !important;
+          }
+          .hero-date {
+            font-size: 12px !important;
+            color: rgba(238, 240, 244, 0.35) !important;
+            font-weight: 400 !important;
+            margin-top: 2px !important;
+          }
+
+          /* Readiness ring size + typography */
+          .readiness-ring {
+            width: 88px !important;
+            height: 88px !important;
+          }
+          .readiness-ring :global(svg) {
+            width: 88px !important;
+            height: 88px !important;
+          }
+          .readiness-ring-score {
+            font-size: 28px !important;
+            font-weight: 800 !important;
+            letter-spacing: -1px !important;
+          }
+          .readiness-ring-outof {
+            font-size: 9px !important;
+            font-weight: 500 !important;
+            letter-spacing: 0.06em !important;
+            text-transform: uppercase !important;
+            color: rgba(238, 240, 244, 0.3) !important;
+          }
+          .readiness-ring-label {
+            font-size: 8px !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.1em !important;
+            text-transform: uppercase !important;
+            color: rgba(238, 240, 244, 0.2) !important;
+          }
+
+          /* Bars: teal (brand) */
+          .readiness-metric-label {
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            color: rgba(238, 240, 244, 0.55) !important;
+          }
+          .readiness-metric-value {
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            color: #ffffff !important;
+          }
+          .readiness-metric-bar {
+            height: 3px !important;
+            border-radius: 2px !important;
+            background: rgba(255, 255, 255, 0.06) !important;
+          }
+          .readiness-metric-fill {
+            background: #00c9a0 !important;
+            border-radius: 2px !important;
+          }
+
+          /* Start Workout CTA */
+          .start-workout-btn {
+            width: calc(100% - 36px) !important;
+            margin: 16px 18px 8px !important;
+            padding: 15px !important;
+            background: #00c9a0 !important;
+            color: #08090c !important;
+            border: none !important;
+            border-radius: 10px !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.2px !important;
+            cursor: pointer !important;
+            font-family: inherit !important;
+            transition: opacity 0.15s !important;
+            height: auto !important;
+            line-height: normal !important;
+          }
+
+          /* Secondary CTA */
+          .perf-dashboard-cta {
+            width: calc(100% - 36px) !important;
+            margin: 0 18px 16px !important;
+            padding: 13px !important;
+            background: transparent !important;
+            color: rgba(238, 240, 244, 0.45) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 10px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            font-family: inherit !important;
+            height: auto !important;
           }
         }
         .perf-dashboard-cta:hover {
@@ -555,12 +699,10 @@ export default function AthleteHomeDashboard() {
       {/* Hero — full width */}
       <section className="athlete-dashboard-card hero-card" style={CARD_STYLE}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "rgba(238,240,244,0.95)", margin: 0, marginBottom: 4 }}>
+          <h1 className="hero-greeting" style={{ fontSize: 22, fontWeight: 700, color: "rgba(238,240,244,0.95)", marginBottom: 4 }}>
             {getGreeting()}, {displayName}
           </h1>
-          <p style={{ fontSize: 14, color: "rgba(238,240,244,0.55)", margin: 0 }}>
-            {getDateLabel()}
-          </p>
+          <p className="hero-date" style={{ fontSize: 14, color: "rgba(238,240,244,0.55)" }}>{getDateLabel()}</p>
         </div>
         <div className="hero-card-meta">
           <span
@@ -656,6 +798,7 @@ export default function AthleteHomeDashboard() {
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
           <Link
             href="/programme"
+            className="start-workout-btn"
             style={{
               display: "block",
               height: 50,

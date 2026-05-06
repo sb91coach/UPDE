@@ -92,10 +92,8 @@ export default function DayAccordion({
 
   return (
     <div
-      className=""
+      className={`dayCard ${expanded ? "dayCardExpanded" : ""}`}
       style={{
-        background: "#0a0c12",
-        color: "rgba(238,240,244,0.9)",
         marginBottom: 10,
       }}
     >
@@ -105,34 +103,31 @@ export default function DayAccordion({
         aria-expanded={expanded}
         aria-controls={`day-content-${dayId}`}
         id={`day-header-${dayId}`}
-        className=""
-        style={{
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.09)",
-          borderRadius: 14,
-          padding: "14px 16px",
-          width: "100%",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          color: "rgba(238,240,244,0.92)",
-          fontSize: 15,
-          fontWeight: 600,
-          cursor: "pointer",
-        }}
+        className="dayHeader"
       >
         <span className="dayAccordionHeaderLeft">
-          <span className="dayAccordionDot" aria-hidden />
+          <span
+            className={`dayAccordionDot ${
+              day.type === "Red"
+                ? "dotRed"
+                : day.type === "Green"
+                  ? "dotGreen"
+                  : day.type === "Recovery"
+                    ? "dotRecovery"
+                    : "dotOff"
+            }`}
+            aria-hidden
+          />
           <span className="dayAccordionTitleWrap">
             <span className="dayAccordionDay">{day.day}</span>
-            <span className="dayAccordionTypePill">{day.type} Day</span>
+            <span className="dayAccordionType">{day.title}</span>
           </span>
         </span>
         <span className="dayAccordionHeaderRight" aria-hidden>
           {day.duration > 0 && (
             <span className="dayAccordionDuration">~{day.duration} min</span>
           )}
-          <span className={`dayAccordionChevron ${expanded ? "dayAccordionChevron--open" : ""}`}>⌃</span>
+          <span className="dayAccordionChevron">›</span>
         </span>
       </button>
 
@@ -140,12 +135,7 @@ export default function DayAccordion({
         id={`day-content-${dayId}`}
         role="region"
         aria-labelledby={`day-header-${dayId}`}
-        className=""
-        style={{
-          background: "rgba(255,255,255,0.02)",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          padding: "14px 16px",
-        }}
+        className={`dayContent ${expanded ? "dayContentOpen" : ""}`}
       >
         <div
           className="dayAccordionInner"
@@ -239,28 +229,6 @@ export default function DayAccordion({
         </div>
       </div>
       <style jsx>{`
-        .dayAccordionRoot {
-          margin-bottom: 10px;
-          background: var(--bg-card);
-          border: var(--border-card);
-          border-radius: var(--radius-card);
-          overflow: hidden;
-        }
-        .dayAccordionHeader {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 16px;
-          min-height: 56px;
-          background: transparent;
-          border: none;
-          color: inherit;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          text-align: left;
-        }
         .dayAccordionHeaderLeft {
           display: flex;
           align-items: center;
@@ -268,71 +236,114 @@ export default function DayAccordion({
           flex: 1 1 0;
           min-width: 0;
         }
-        .dayAccordionDot {
-          width: 8px;
-          height: 8px;
-          border-radius: 999px;
-          background: var(--accent-teal);
-          box-shadow: 0 0 10px rgba(0, 201, 160, 0.6);
-          flex-shrink: 0;
-        }
-        .dayAccordionTitleWrap {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          min-width: 0;
-        }
-        .dayAccordionDay {
-          font-size: 15px;
-          font-weight: 600;
-          color: var(--text-primary);
-        }
-        .dayAccordionTypePill {
-          display: inline-flex;
-          align-items: center;
-          padding: 2px 8px;
-          border-radius: var(--radius-pill);
-          font-size: 11px;
-          font-weight: 600;
-          background: rgba(255, 255, 255, 0.06);
-          color: var(--text-secondary);
-        }
         .dayAccordionHeaderRight {
           display: flex;
           align-items: center;
           gap: 8px;
           flex-shrink: 0;
         }
+
+        .dayCard {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 12px;
+          color: rgba(238, 240, 244, 0.9);
+          overflow: hidden;
+          transition: background 0.15s, border-color 0.15s;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .dayCard:hover {
+          background: rgba(255, 255, 255, 0.055);
+          border-color: rgba(255, 255, 255, 0.12);
+        }
+        .dayCardExpanded {
+          background: rgba(255, 255, 255, 0.055);
+          border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .dayHeader {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 16px;
+          min-height: 62px;
+          background: transparent;
+          border: none;
+          color: inherit;
+          cursor: pointer;
+          text-align: left;
+        }
+
+        .dayAccordionDot {
+          width: 9px;
+          height: 9px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+        .dotRed {
+          background: #f04e37;
+          box-shadow: 0 0 8px rgba(240, 78, 55, 0.35);
+        }
+        .dotGreen {
+          background: #00c9a0;
+          box-shadow: 0 0 8px rgba(0, 201, 160, 0.35);
+        }
+        .dotRecovery {
+          background: rgba(238, 240, 244, 0.18);
+        }
+        .dotOff {
+          background: rgba(238, 240, 244, 0.12);
+        }
+
+        .dayAccordionTitleWrap {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          min-width: 0;
+        }
+        .dayAccordionDay {
+          font-size: 15px;
+          font-weight: 700;
+          letter-spacing: -0.2px;
+          color: #ffffff;
+        }
+        .dayAccordionType {
+          font-size: 12px;
+          font-weight: 400;
+          color: rgba(238, 240, 244, 0.4);
+          margin-top: 2px;
+        }
+
         .dayAccordionDuration {
-          font-size: 13px;
-          color: var(--text-muted);
+          margin-left: auto;
+          font-size: 12px;
+          font-weight: 500;
+          color: rgba(238, 240, 244, 0.3);
+          white-space: nowrap;
         }
         .dayAccordionChevron {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 20px;
-          height: 20px;
-          border-radius: 999px;
-          color: var(--text-muted);
-          font-size: 11px;
-          transform: rotate(0deg);
-          transition: transform 0.2s ease;
+          color: rgba(238, 240, 244, 0.18);
+          font-size: 14px;
+          margin-left: 8px;
+          flex-shrink: 0;
         }
-        .dayAccordionChevron--open {
-          transform: rotate(180deg);
+
+        .dayContent {
+          display: none;
         }
-        .dayAccordionContent {
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height 0.3s ease-out;
-        }
-        .dayAccordionContent--open {
-          max-height: 8000px;
+        .dayContentOpen {
+          display: block;
+          padding: 14px 16px;
+          background: rgba(255, 255, 255, 0.03);
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
         .dayAccordionInner {
-          padding: 0 16px 16px;
-          border-top: var(--border-subtle);
+          padding: 0;
+          border-top: none;
         }
         .dayAccordionBlur {
           filter: blur(3px);
@@ -344,17 +355,51 @@ export default function DayAccordion({
           height: 50px;
           margin-top: 16px;
           padding: 0 16px;
-          border-radius: var(--radius-btn);
-          background: var(--gradient-cta);
+          border-radius: 10px;
+          background: #00c9a0;
           border: none;
-          color: #ffffff;
+          color: #08090c;
           font-size: 15px;
-          font-weight: 700;
+          font-weight: 800;
+          letter-spacing: -0.2px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
+        }
+
+        @media (min-width: 769px) {
+          .dayCard {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 14px;
+          }
+          .dayHeader {
+            padding: 14px 16px;
+            min-height: 56px;
+          }
+          .dayAccordionDay {
+            font-weight: 600;
+            letter-spacing: 0;
+            color: var(--text-primary);
+          }
+          .dayAccordionType {
+            display: none;
+          }
+          .dayAccordionChevron {
+            color: var(--text-muted);
+          }
+          .dayContentOpen {
+            background: rgba(255, 255, 255, 0.02);
+          }
+          .dayAccordionBeginBtn {
+            border-radius: var(--radius-btn);
+            background: var(--gradient-cta);
+            color: #ffffff;
+            font-weight: 700;
+            letter-spacing: 0;
+          }
         }
       `}</style>
     </div>

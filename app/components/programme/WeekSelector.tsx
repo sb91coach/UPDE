@@ -27,6 +27,7 @@ export default function WeekSelector({
   return (
     <div className={className ?? ""} role="tablist" aria-label="Select week">
       <div
+        className="weekSelectorRow"
         style={{
           display: "flex",
           gap: 8,
@@ -46,39 +47,55 @@ export default function WeekSelector({
               aria-selected={isActive}
               aria-label={`Week ${weekNum}`}
               onClick={() => onWeekChange(weekNum)}
-              style={
-                isActive
-                  ? {
-                      background: "linear-gradient(135deg,#0A84FF,#7B61FF)",
-                      border: "none",
-                      borderRadius: 18,
-                      padding: "7px 18px",
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "white",
-                      whiteSpace: "nowrap",
-                      cursor: "pointer",
-                      flexShrink: 0,
-                    }
-                  : {
-                      background: "rgba(255,255,255,0.05)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 18,
-                      padding: "7px 18px",
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "rgba(238,240,244,0.5)",
-                      whiteSpace: "nowrap",
-                      cursor: "pointer",
-                      flexShrink: 0,
-                    }
-              }
+              className={`weekPill ${isActive ? "weekPillActive" : ""}`}
             >
               <span>Week {weekNum}</span>
             </button>
           );
         })}
       </div>
+
+      <style jsx>{`
+        .weekSelectorRow::-webkit-scrollbar {
+          display: none;
+        }
+
+        .weekPill {
+          flex-shrink: 0;
+          padding: 7px 16px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.03);
+          color: rgba(238, 240, 244, 0.4);
+          cursor: pointer;
+          white-space: nowrap;
+          min-height: 34px;
+        }
+
+        .weekPillActive {
+          background: rgba(0, 201, 160, 0.1);
+          border-color: rgba(0, 201, 160, 0.3);
+          color: #00c9a0;
+          font-weight: 700;
+        }
+
+        @media (min-width: 769px) {
+          .weekPill {
+            padding: 7px 18px;
+            border-radius: 18px;
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.05);
+          }
+          .weekPillActive {
+            background: linear-gradient(135deg, #0a84ff, #7b61ff);
+            color: #fff;
+            border: none;
+          }
+        }
+      `}</style>
     </div>
   );
 }

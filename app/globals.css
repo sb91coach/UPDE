@@ -191,3 +191,59 @@ body {
   color: rgba(238, 240, 244, 0.85);
   line-height: 1.4;
 }
+
+/* ======================================================
+   GLOBAL MOBILE TOKENS (max-width: 768px)
+====================================================== */
+@media (max-width: 768px) {
+  /* Reduce all card border radius */
+  [class*="rounded-xl"], [class*="rounded-2xl"] {
+    border-radius: 14px !important;
+  }
+  [class*="rounded-full"] {
+    /* keep as is for pills and dots */
+  }
+
+  /* Remove any box-shadow on mobile */
+  * { box-shadow: none !important; }
+  /* Exception: glow dots keep their box-shadow */
+  .dot-glow, [class*="dot"] { box-shadow: inherit !important; }
+
+  /* Page horizontal padding */
+  .page-content, main, [class*="container"] {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* Content bottom padding — above tab bar */
+  main, .page-content {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Typography pass */
+  .data-value, .score-value, .metric-value {
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.8px !important;
+  }
+
+  .section-label, [class*="label"], .card-label {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    color: rgba(238,240,244,0.25) !important;
+  }
+
+  p, .body-text {
+    font-size: 13px !important;
+    color: rgba(238,240,244,0.5) !important;
+    line-height: 1.6 !important;
+  }
+
+  .card-title, h3 {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.3px !important;
+  }
+}
